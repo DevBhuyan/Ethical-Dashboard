@@ -1,0 +1,14 @@
+1. Load the repository of datasets and models available [DONE]
+2. Allow the user to choose a dataset
+3. Allow the user to upload an additional custom csv if not available already
+4. Allow the user to review the uploaded data
+5. Allow the user to choose a stored base model
+6. Allow the user to upload a custom model, automatically infer type and load as python class
+7. Allow the user to confirm dataset and model
+8. Allow the user to choose sensitive attributes, if applicable
+9. Show fairness evaluation metrics to the user
+10. Show privacy evaluation metrics to the user:
+    10.1. Allow user to re-edit data to inject private data and recompute metric on specific data
+11. Show robustness evaluation metrics to the user:
+    11.1 Allow user to inject bad data or automatically inject outliers and compute metric
+12. Show explainability evaluation metrics to the user

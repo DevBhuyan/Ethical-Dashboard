@@ -1,0 +1,19 @@
+# ~/.streamlit/config.toml or in your project folder under .streamlit/config.toml
+
+[server]
+headless = true
+port = 8501
+enableCORS = false
+enableWebsocketCompression = true
+
+[theme]
+primaryColor = "#1a73e8"         # Example: blue (can customize)
+backgroundColor = "#ffffff"      # White background
+secondaryBackgroundColor = "#f8f9fa"  # Light gray secondary background
+textColor = "#111111"            # Dark text
+font = "sans serif"              # Clean, standard font
+
+[ui]
+# Hide Streamlit branding and menu elements
+hideMenuBar = true
+hideFooter = true

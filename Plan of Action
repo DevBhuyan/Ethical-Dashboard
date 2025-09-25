@@ -1,0 +1,51 @@
+Problem - II:
+
+Developing an ethical dashboard:
+
+Design a GUI where a user can choose a dataset, choose a model, choose an ethical metric, and see the results, whether they are ethically correct or not.
+
+Datasets: Law, COMPAS, Adult, German credit card
+Model: classical & deep models, including LLMs
+Metrics: you can make category - fairness, privacy, robustness, and explainability
+
+
+Components required:
+    1. Datasets
+    2. Base Models
+    3. Metric Computations
+    a. Fairness Metrics
+    b. Privacy Metrics
+    c. Robustness Metrics
+    d. Explainability Metrics
+
+
+Backbone:
+    Streamlit Application - Tornado webserver
+    Hosted on Streamlit cloud/AWS/Azure
+
+
+Component procurement/building:
+    Datasets:
+        1	ACC
+        2	Adult
+        3	Automobile
+        4	Boston Housing
+        5	California Housing
+        6	COMPAS
+        7	Diabetes
+        8	German Credit Card
+        9	Hill Valley
+        10	Ionosphere
+        11	IoT
+        12	Isolet
+        13	Law
+        14	NSL-KDD99
+        15	Segmentation
+        16	Synthetic
+        17	Vehicle
+        18	Vowel
+        19	WDBC
+        20	Wine
+
+    Base Models:
+        Sklearn interface:
