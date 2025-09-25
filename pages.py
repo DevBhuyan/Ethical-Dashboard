@@ -11,6 +11,7 @@ import streamlit as st  # for UI/UX
 from streamlit import session_state as ss  # persistance of values
 from load_datasets import load_all_datasets, load_specific_dataset  # loaaaaad!!!
 from load_models import eager_load_all_models, lazy_load_model  # looooaaaad again!!
+from dataset_viewer import display_dataset
 
 
 if 'page' not in ss:
@@ -26,9 +27,9 @@ def show_data():  # page 1
     if st.button('Show all datasets'):
         for name, dset in load_all_datasets().items():
             st.subheader(name)
-            st.dataframe(dset)
+            display_dataset(dset)
     else:
-        st.dataframe(load_specific_dataset(choice))
+        display_dataset(load_specific_dataset(choice)[choice])
 
     if st.button('Upload my own data'):
         pass

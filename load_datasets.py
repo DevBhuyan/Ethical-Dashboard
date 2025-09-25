@@ -52,7 +52,7 @@ def load_specific_dataset(dset_name: str = "",
         }
 
     elif dset_name:
-        dset_path = classification_dsets[
+        dset_path = src + classification_dsets[
             classification_dsets['Name'] == dset_name
         ]['Location'].values[0]
 
@@ -61,7 +61,7 @@ def load_specific_dataset(dset_name: str = "",
         }
 
     elif dset_path:
-        dset_name = classification_dsets[
+        dset_name = src + classification_dsets[
             classification_dsets['Location'] == dset_name
         ]['Name'].values[0]
 
