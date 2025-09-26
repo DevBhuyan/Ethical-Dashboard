@@ -3,15 +3,19 @@
 """
 Created on Thu Sep 25 22:59:35 2025
 
-@author: dev
+@author: dev and Dhananjoy Bhuyan
 """
 
 
 import streamlit as st
+from pages import show_data
+from streamlit import session_state as ss
 
+if "page" not in ss:
+    ss.page = "show_data"
 
 st.set_page_config(
-    page_title="Ethical AI Dashboard",
+    page_title="Ethical AI - Dashboard",
     page_icon="🌱",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -44,4 +48,7 @@ st.markdown(
 )
 
 
-# st.title("Ethical AI Dashboard")
+st.title("Ethical AI Dashboard")
+if __name__ == "__main__":
+    if ss.page == "show_data":
+        show_data()

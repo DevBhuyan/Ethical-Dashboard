@@ -1,8 +1,8 @@
 1. Load the repository of datasets and models available [DONE]
 2. Allow the user to choose a dataset[DONE]
-3. Allow the user to upload an additional custom csv if not available already[DOING]
-4. Allow the user to review the uploaded data
-5. Allow the user to choose a stored base model
+3. Allow the user to upload an additional custom csv if not available already[DONE]
+4. Allow the user to review the uploaded data[DONE]
+5. Allow the user to choose a stored base model[DOING]
 6. Allow the user to upload a custom model, automatically infer type and load as python class
 7. Allow the user to confirm dataset and model
 8. Allow the user to choose sensitive attributes, if applicable

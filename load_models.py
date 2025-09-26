@@ -3,7 +3,7 @@
 """
 Created on Fri Sep 26 00:47:54 2025
 
-@author: dev
+@author: dev and Dhananjoy Bhuyan
 """
 
 import os
@@ -16,7 +16,7 @@ from importlib.util import (
 base_model_files = os.listdir('./base_models')
 
 
-def eager_load_all_models():
+def eager_load_all_models(names_only: bool = False) -> dict | list:
 
     src = './base_models/'
 

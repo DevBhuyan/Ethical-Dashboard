@@ -12,29 +12,49 @@ from streamlit import session_state as ss  # persistance of values
 from load_datasets import load_all_datasets, load_specific_dataset  # loaaaaad!!!
 from load_models import eager_load_all_models, lazy_load_model  # looooaaaad again!!
 from dataset_viewer import display_dataset
+import pandas as pd
 
 
-if 'page' not in ss:
-    ss.page = 'show_data'
+if 'showing_all' not in ss:
+    ss.showing_all = False
+if 'current_data' not in ss:
+    ss.current_data = None
+if 'custom_csv' not in ss:
+    ss.custom_csv = False
 
 
 def show_data():  # page 1
+
     st.markdown("""
-                <h4>Choose a Dataset:</h4>
-                """, unsafe_allow_html=True)  # header
+                
+                <h3>Choose a Dataset:</h3>
+                
+                """, unsafe_allow_html=True)  # upper stuff......hehe
     names = load_all_datasets(True)  # get the names.
     choice = st.selectbox('datasets', names)  # take input.
     if st.button('Show all datasets'):
+        ss.showing_all = True
+
+        st.rerun()
+    elif ss.custom_csv:
+        ss.showing_all = False
+    else:
+        ss.showing_all = False
+        ss.current_data = load_specific_dataset(choice)[choice]
+
+    file = st.file_uploader(
+        'Want to upload your own data? Upload here:', type="csv")
+
+    if file and not ss.custom_csv:
+        ss.current_data = pd.read_csv(file)
+        ss.custom_csv = True
+        st.rerun()
+    else:
+        ss.custom_csv = False
+
+    if ss.showing_all:
         for name, dset in load_all_datasets().items():
             st.subheader(name)
             display_dataset(dset)
     else:
-        display_dataset(load_specific_dataset(choice)[choice])
-
-    if st.button('Upload my own data'):
-        pass
-
-
-if __name__ == "__main__":
-    if ss.page == "show_data":
-        show_data()
+        display_dataset(ss.current_data)
