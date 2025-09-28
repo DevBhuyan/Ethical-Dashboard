@@ -1,6 +1,3 @@
 {
-  "page": "data_home",
-  "showing_all": false,
-  "current_data": false,
-  "custom_csv": false
+  "page": "data_home"
 }

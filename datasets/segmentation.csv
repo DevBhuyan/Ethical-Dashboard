@@ -1,4 +1,4 @@
-ID,Gender,Ever_Married,Age,Graduated,Profession,Work_Experience,Spending_Score,Family_Size,Var_1,Segmentation
+ID,Gender,Ever_Married,Age,Graduated,Profession,Work_Experience,Spending_Score,Family_Size,Var_1,Class
 462809,Male,No,22,No,Healthcare,1,Low,4,Cat_4,D
 462643,Female,Yes,38,Yes,Engineer,,Average,3,Cat_4,A
 466315,Female,Yes,67,Yes,Engineer,1,Low,1,Cat_6,B

@@ -13,10 +13,10 @@ Components required:
     1. Datasets
     2. Base Models
     3. Metric Computations
-    a. Fairness Metrics
-    b. Privacy Metrics
-    c. Robustness Metrics
-    d. Explainability Metrics
+        a. Fairness Metrics
+        b. Privacy Metrics
+        c. Robustness Metrics
+        d. Explainability Metrics
 
 
 Backbone:
