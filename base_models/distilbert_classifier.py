@@ -33,4 +33,7 @@ def init_model(num_classes=2):
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
     model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
-    return model, tokenizer, 'tensorflow'
+    return {
+        "model": model,
+        "tokenizer": tokenizer
+    }

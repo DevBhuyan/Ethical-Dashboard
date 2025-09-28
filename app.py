@@ -8,11 +8,19 @@ Created on Thu Sep 25 22:59:35 2025
 
 
 import streamlit as st
-from pages import show_data
-from streamlit import session_state as ss
+from pages import (
+    data_home,
+    debug_info,
+    view_dataset,
+    edit_data,
+    model_home,
+    view_model
+)
+from session_state_attrib import (
+    init,
+    ss
+)
 
-if "page" not in ss:
-    ss.page = "show_data"
 
 st.set_page_config(
     page_title="Ethical AI - Dashboard",
@@ -20,15 +28,19 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'Get Help': 'https://example.com/help',
+        'Get Help': 'mailto:devvjiit.bhuyan@gmail.com',
         'Report a bug': 'mailto:devvjiit.bhuyan@gmail.com',
         'About': "This dashboard tracks and visualizes AI ethics metrics, fairness, and model accountability."
     }
 )
 
 
-st.markdown(
-    """
+init()
+
+
+def main():
+    st.markdown(
+        """
     <style>
     /* Remove padding/margins around the main container */
     .css-18e3th9 {padding: 0rem 1rem 0rem 1rem;}
@@ -36,19 +48,35 @@ st.markdown(
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    /* Optional: make all buttons and inputs look standard */
-    button, input, select, textarea {
-        border-radius: 4px !important;
-        border: 1px solid #ccc !important;
-        font-family: sans-serif !important;
-    }
     </style>
     """,
-    unsafe_allow_html=True
-)
+        unsafe_allow_html=True
+    )
+
+    st.title("Ethical AI Dashboard")
+
+    if ss.page == "data_home":
+        data_home()
+
+    elif ss.page == "view_dataset":
+        view_dataset()
+
+    elif ss.page == "edit_data":
+        edit_data()
+
+    elif ss.page == "model_home":
+        model_home()
+
+    elif ss.page == "view_model":
+        view_model()
+
+    else:
+        st.subheader("You have reached a dead-end")
+        st.error(f"There is no page named {ss.page}")
+        st.snow()
+
+    debug_info()
 
 
-st.title("Ethical AI Dashboard")
 if __name__ == "__main__":
-    if ss.page == "show_data":
-        show_data()
+    main()

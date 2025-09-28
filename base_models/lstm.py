@@ -27,4 +27,4 @@ def init_model(vocab_size=10000, embedding_dim=128, input_length=100, num_classe
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy']
     )
-    return model, 'tensorflow'
+    return model

@@ -21,4 +21,4 @@ def init_model():
         max_depth=-1,
         random_state=42
     )
-    return model, 'sklearn'
+    return model

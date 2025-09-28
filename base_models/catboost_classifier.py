@@ -22,4 +22,4 @@ def init_model():
         verbose=0,
         random_state=42
     )
-    return model, 'sklearn'
+    return model

@@ -34,4 +34,4 @@ def init_model(seq_length=50, d_model=64, num_heads=2, ff_dim=128, num_classes=2
     model = Model(inputs=inputs, outputs=outputs)
     model.compile(optimizer='adam',
                   loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    return model, 'tensorflow'
+    return model

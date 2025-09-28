@@ -23,4 +23,4 @@ def init_model(input_dim=32, encoding_dim=16):
     model = Model(inputs=input_layer, outputs=decoded)
     model.compile(optimizer='adam', loss='mse')
 
-    return model, 'tensorflow'
+    return model

@@ -20,4 +20,4 @@ def init_model():
         weights='uniform',
         algorithm='auto'
     )
-    return model, 'sklearn'
+    return model

@@ -46,6 +46,13 @@ Component procurement/building:
         18	Vowel
         19	WDBC
         20	Wine
+        
+    Custom Dataset rules:
+        1. Must be classification Datasets
+        2. Must have a categorical column named "Class" where
+            || unique_count(df["Class"]) < len(df) // 2 ||
+        3. May optionally have "sensitive attributes"
+        
 
     Base Models:
         Sklearn interface:

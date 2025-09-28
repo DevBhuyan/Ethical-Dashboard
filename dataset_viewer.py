@@ -9,6 +9,37 @@ Created on Fri Sep 26 01:10:38 2025
 
 import streamlit as st
 import pandas as pd
+from load_datasets import (
+    unique_count,
+    infer_sensitive_attributes,
+    load_dataset_from_st_upload
+)
+from session_state_attrib import ss
+
+
+DEFAULT_CONTAINER_HEIGHT = 400
+
+
+def data_card(df):
+
+    with st.expander("", expanded=True):
+
+        st.write(f"Dataset name: **{ss.selected_dataset_name}**")
+
+        sensitive_attributes = infer_sensitive_attributes(df)
+
+        st.info(
+            f"Contains {df.shape[0]} **rows** {df.shape[1]} **columns** | data points divided into {unique_count(df['Class'])} **Classes**"
+        )
+        if sensitive_attributes:
+            if len(sensitive_attributes) > 1:
+                st.success(
+                    f"Contains {len(sensitive_attributes)} sensitive attributes: {', '.join(sensitive_attributes)}"
+                )
+            else:
+                st.success(
+                    f"Contains {len(sensitive_attributes)} sensitive attributes: {sensitive_attributes[0]}"
+                )
 
 
 def display_dataset(df: pd.DataFrame):
@@ -19,10 +50,9 @@ def display_dataset(df: pd.DataFrame):
     - Optional preview (top N rows)
     - Search/filter support
     """
-    st.markdown("### Dataset Overview")
+    st.write("### Dataset Overview")
 
-    st.write(f"**Number of rows:** {df.shape[0]}")
-    st.write(f"**Number of columns:** {df.shape[1]}")
+    data_card(df)
 
     col_info = pd.DataFrame({
         "Column": df.columns,
@@ -30,38 +60,57 @@ def display_dataset(df: pd.DataFrame):
         "Missing Values": [df[col].isna().sum() for col in df.columns],
         "Unique Values": [df[col].nunique() for col in df.columns]
     })
-    st.markdown("**Column Information:**")
-    st.dataframe(col_info,
-                 use_container_width=True)
+
+    col1, col2 = st.columns(2)
 
     numeric_cols = df.select_dtypes(include='number').columns
     if len(numeric_cols) > 0:
-        st.markdown("**Numeric Summary:**")
-        st.dataframe(df[numeric_cols].describe().T,
-                     use_container_width=True)
+
+        with col1:
+            with st.container(height=DEFAULT_CONTAINER_HEIGHT):
+                st.write("**Column Information:**")
+                st.dataframe(col_info,
+                             use_container_width=True,
+                             hide_index=True)
+
+        with col2:
+            with st.container(height=DEFAULT_CONTAINER_HEIGHT):
+                st.write("**Numeric Summary:**")
+                st.dataframe(df[numeric_cols].describe().T,
+                             use_container_width=True)
+
+    else:
+        with st.container(height=DEFAULT_CONTAINER_HEIGHT):
+            st.dataframe(col_info,
+                         use_container_width=True)
 
     categorical_cols = df.select_dtypes(include=['object', 'category']).columns
     if len(categorical_cols) > 0:
-        st.markdown("**Categorical Summary:**")
-        cat_summary = pd.DataFrame({
-            col: df[col].value_counts().head(5).to_dict()
-            for col in categorical_cols
-        }).T
-        st.dataframe(cat_summary,
+        with col1:
+            with st.expander("Categorical Summary"):
+                st.write("**Categorical Summary:**")
+                cat_summary = pd.DataFrame({
+                    col: df[col].value_counts().head(5).to_dict()
+                    for col in categorical_cols
+                }).T
+                st.dataframe(cat_summary,
+                             use_container_width=True)
+
+    with col2:
+        with st.expander("Dataset Preview"):
+            st.write("**Preview of Data (first 10 rows):**")
+            st.dataframe(df.head(10),
+                         use_container_width=True)
+
+    with st.expander("View Column wise data"):
+        st.write("**Select columns to display:**")
+        selected_cols = st.multiselect(
+            "Columns",
+            df.columns.tolist(),
+            default=df.columns.tolist()
+        )
+        st.dataframe(df[selected_cols],
                      use_container_width=True)
-
-    st.markdown("**Preview of Data (first 10 rows):**")
-    st.dataframe(df.head(10),
-                 use_container_width=True)
-
-    st.markdown("**Select columns to display:**")
-    selected_cols = st.multiselect(
-        "Columns",
-        df.columns.tolist(),
-        default=df.columns.tolist()
-    )
-    st.dataframe(df[selected_cols],
-                 use_container_width=True)
 
 
 def edit_dataset(df: pd.DataFrame) -> pd.DataFrame:
@@ -71,7 +120,7 @@ def edit_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
     Returns the edited DataFrame.
     """
-    st.markdown("### Edit Dataset")
+    st.write("### Edit Dataset")
 
     st.info("You can edit values directly in the table below. "
             "Once you are done, the changes will be reflected in the returned DataFrame.")
@@ -82,8 +131,14 @@ def edit_dataset(df: pd.DataFrame) -> pd.DataFrame:
         use_container_width=True
     )
 
-    if st.button("Save Changes"):
-        st.success("Changes saved!")
-        return edited_df
+    upload = st.file_uploader(
+        "OR Edit the dataset in your local editor and re-upload here",
+        type=['csv']
+    )
+
+    if upload:
+        ss.selected_dataset = load_dataset_from_st_upload(upload)
+        ss.page = "view_dataset"
+        st.rerun()
 
     return edited_df
