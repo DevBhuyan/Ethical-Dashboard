@@ -8,6 +8,7 @@ Created on Fri Sep 26 00:47:54 2025
 
 from safetensors import safe_open
 import tensorflow as tf
+import sklearn
 import tempfile
 import inspect
 import joblib

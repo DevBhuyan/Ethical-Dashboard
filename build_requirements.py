@@ -166,7 +166,6 @@ def main():
 
     filtered_imports = filter_installed_packages(all_imports)
     library_versions = get_library_versions(filtered_imports)
-    library_versions = get_library_versions(all_imports)
 
     create_requirements_file(library_versions)
 
