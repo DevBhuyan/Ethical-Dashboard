@@ -18,7 +18,7 @@ import pandas as pd
 if 'showing_all' not in ss:
     ss.showing_all = False
 if 'current_data' not in ss:
-    ss.current_data = None
+    ss.current_data = False
 if 'custom_csv' not in ss:
     ss.custom_csv = False
 
@@ -48,6 +48,7 @@ def show_data():  # page 1
     if file and not ss.custom_csv:
         ss.current_data = pd.read_csv(file)
         ss.custom_csv = True
+        ss.showing_all = False
         st.rerun()
     else:
         ss.custom_csv = False
@@ -56,5 +57,9 @@ def show_data():  # page 1
         for name, dset in load_all_datasets().items():
             st.subheader(name)
             display_dataset(dset)
+
     else:
         display_dataset(ss.current_data)
+
+    if st.button('Continue'):
+        pass
