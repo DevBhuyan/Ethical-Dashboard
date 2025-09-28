@@ -1,7 +1,7 @@
 # ~/.streamlit/config.toml or .streamlit/config.toml
 
 [server]
-headless = true
+headless = false
 port = 8501
 sslCertFile = "./certificates/certificate.crt"
 sslKeyFile = "./certificates/private.key"

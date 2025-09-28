@@ -1,4 +1,5 @@
 datasets/iot.csv
 datasets/synthetic.csv
 datasets/annonymized-credit-card.csv
+certificates
 __pycache__
