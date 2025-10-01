@@ -12,7 +12,9 @@ import pandas as pd
 from load_datasets import (
     unique_count,
     infer_sensitive_attributes,
-    load_dataset_from_st_upload
+    load_dataset_from_st_upload,
+    load_all_datasets,
+    load_specific_dataset
 )
 from session_state_attrib import ss
 
@@ -23,6 +25,20 @@ DEFAULT_CONTAINER_HEIGHT = 400
 def data_card(df):
 
     with st.expander("", expanded=True):
+
+        names = load_all_datasets(names_only=True)
+        choice = st.selectbox(
+            label='Selected Dataset',
+            options=names,
+            index=names.index(ss.selected_dataset_name)
+        )
+
+        if choice != ss.selected_dataset_name:
+            ss.selected_dataset_name = choice
+            ss.selected_dataset = load_specific_dataset(
+                dset_name=choice
+            )[choice]
+            st.rerun()
 
         st.write(f"Dataset name: **{ss.selected_dataset_name}**")
 

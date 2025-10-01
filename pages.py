@@ -226,7 +226,7 @@ def view_model():
                      use_container_width=True):
             with st.spinner("Training model....\nThis may take a while"):
                 train()
-            asyncio.run(toaster)
+            asyncio.run(toaster())
             ss.page = "training_results"
             st.rerun()
 
@@ -280,6 +280,24 @@ def training_results():
     ax.set_xlabel("Predicted Labels")
     ax.set_ylabel("True Labels")
     st.pyplot(fig)
+
+    _, col1, col2, _ = st.columns([2, 3, 3, 2])
+
+    with col1:
+        if st.button("Choose a different configuration",
+                     use_container_width=True,
+                     type='primary'):
+            ss.page = "model_home"
+            st.rerun()
+
+    with col2:
+        if st.button("Proceed to Ethical Evaluation",
+                     use_container_width=True):
+            with st.spinner("Training model....\nThis may take a while"):
+                train()
+            asyncio.run(toaster())
+            ss.page = "ethical_eval"
+            st.rerun()
 
 
 async def toaster():
