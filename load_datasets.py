@@ -7,7 +7,24 @@ Created on Fri Sep 26 00:30:13 2025
 """
 
 
+from sklearn.preprocessing import LabelEncoder
 import pandas as pd
+import os
+from session_state_attrib import ss
+
+
+def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+
+    label_encoders = {}
+    for col in df.columns:
+        if df[col].dtype == 'object':  # categorical string column
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col].astype(str))
+            label_encoders[col] = le
+
+    ss.label_encoders = label_encoders
+
+    return df
 
 
 def load_all_datasets(names_only: bool = False):
@@ -20,8 +37,14 @@ def load_all_datasets(names_only: bool = False):
     classification_dsets.drop(columns=['Sl. No', 'Type'], inplace=True)
 
     if names_only:
-        dsets = [ds_name
-                 for ds_name in classification_dsets['Name'].values]
+        dsets = [
+            ds_name
+            for ds_name, file in zip(
+                classification_dsets['Name'].values,
+                classification_dsets['Location'].values
+            )
+            if os.path.exists(src + file)
+        ]
 
     else:
         dsets = {
@@ -30,6 +53,7 @@ def load_all_datasets(names_only: bool = False):
                 classification_dsets['Name'].values,
                 classification_dsets['Location'].values
             )
+            if os.path.exists(src + file)
         }
 
     return dsets
@@ -48,7 +72,7 @@ def load_specific_dataset(dset_name: str = "",
     if dset_path and dset_name:
 
         return {
-            dset_name: pd.read_csv(src + dset_path)
+            dset_name: preprocess_data(pd.read_csv(src + dset_path))
         }
 
     elif dset_name:
@@ -57,7 +81,7 @@ def load_specific_dataset(dset_name: str = "",
         ]['Location'].values[0]
 
         return {
-            dset_name: pd.read_csv(dset_path)
+            dset_name: preprocess_data(pd.read_csv(dset_path))
         }
 
     elif dset_path:
@@ -66,7 +90,7 @@ def load_specific_dataset(dset_name: str = "",
         ]['Name'].values[0]
 
         return {
-            dset_name: pd.read_csv(dset_path)
+            dset_name: preprocess_data(pd.read_csv(dset_path))
         }
 
     else:
@@ -105,37 +129,41 @@ def convert_upload_to_df(upload):
 def validate_dataset(df: pd.DataFrame):
     """
     Validate dataset based on custom rules:
-    1. Must be classification datasets
+    1. Must be classification dataset
     2. Must have a categorical column named 'Class' such that
        unique_count(Class) < len(df) // 2
     3. May optionally have sensitive attributes
     """
-    # Rule 2: Must contain "Class" column
+    # Rule 1 & 2a: Must contain "Class" column
     if "Class" not in df.columns:
         raise ValueError("Dataset must contain a column named 'Class'.")
 
-    # Rule 2b: Check classification criterion
-    class_unique = unique_count(df["Class"])
+    # Rule 2b: Classification criterion
+    class_unique = df["Class"].nunique()
     if class_unique >= len(df) // 2:
         raise ValueError(
             f"Invalid 'Class' column: has {class_unique} unique values, "
             f"which is >= half of dataset size ({len(df)//2})."
         )
 
+    # Ensure 'Class' is numeric labels
+    le = None
+    if df["Class"].dtype == "object":
+        le = LabelEncoder()
+        df["Class"] = le.fit_transform(df["Class"].astype(str))
+
     # Rule 3: Sensitive attributes check (optional)
-    # We'll just log them if present, not enforce
-    sensitive_attrs = [
-        col
-        for col in df.columns
-        if "sensitive" in col.lower()
-    ]
+    sensitive_attrs = [col for col in df.columns if "sensitive" in col.lower()]
     if sensitive_attrs:
-        print(f"Detected sensitive attributes: {sensitive_attrs}")
+        print(f"⚠️ Detected sensitive attributes: {sensitive_attrs}")
+
+    return df, le
 
 
 def load_dataset_from_st_upload(upload):
 
     df = convert_upload_to_df(upload)
+    df = preprocess_data(df)
     validate_dataset(df)
 
     return df

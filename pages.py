@@ -7,8 +7,12 @@ Created on Fri Sep 26 01:13:51 2025
 """
 
 
-from types import FunctionType
-import types
+from sklearn.metrics import classification_report, confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import asyncio
 import inspect
 import streamlit as st
 from session_state_attrib import ss
@@ -26,6 +30,10 @@ from dataset_viewer import (
     display_dataset,
     edit_dataset,
     data_card
+)
+from train_model import (
+    train,
+    eval_model
 )
 
 
@@ -159,7 +167,6 @@ def view_model():
     st.subheader("Model Summary")
     st.write(f"**Type:** {type(model)}")
 
-    # Check if it's a dict (likely safetensors raw tensors)
     if isinstance(model, dict):
         st.info("Model appears to be raw tensors (from safetensors).")
         st.write(f"Number of tensors: {len(model)}")
@@ -169,7 +176,6 @@ def view_model():
             st.caption(f"... and {len(model) - 5} more tensors.")
         return
 
-    # If keras model
     if "keras" in str(type(model)).lower():
         st.success("Detected Keras model ✅")
         try:
@@ -179,23 +185,13 @@ def view_model():
         except Exception:
             st.write("Unable to display Keras summary.")
 
-    # If sklearn-like model
     elif hasattr(model, "get_params"):
         st.success("Detected scikit-learn compatible model ✅")
         params = model.get_params()
         st.write("**Parameters:**")
         st.json(params)
 
-    # Methods available
     st.subheader("Available Methods")
-    # methods = [
-    #     m for m in dir(model)
-    #     if isinstance(
-    #         getattr(model, m),
-    #         types.MethodType
-    #     )
-    #     and not m.startswith("_")
-    # ]
     methods = [
         name
         for name, func in inspect.getmembers(
@@ -216,6 +212,79 @@ def view_model():
     else:
         st.warning("This model does not expose `fit` or `train` method.")
 
+    _, col1, col2, _ = st.columns([2, 3, 3, 2])
+
+    with col1:
+        if st.button("Choose a different model",
+                     use_container_width=True,
+                     type='primary'):
+            ss.page = "model_home"
+            st.rerun()
+
+    with col2:
+        if st.button("Start Training",
+                     use_container_width=True):
+            with st.spinner("Training model....\nThis may take a while"):
+                train()
+            asyncio.run(toaster)
+            ss.page = "training_results"
+            st.rerun()
+
+
+def training_results():
+    st.title("📊 Model Evaluation Results")
+    eval_model()
+
+    if not hasattr(ss, "eval_metrics"):
+        st.warning(
+            "⚠️ No evaluation results found. Please train and evaluate a model first.")
+        return
+
+    metrics = ss.eval_metrics
+    y_test = ss.y_test
+    y_pred = ss.trained_model.predict(ss.X_test)
+
+    # Handle Keras predictions (convert probs → labels)
+    if y_pred.ndim > 1 and y_pred.shape[1] > 1:
+        y_pred = np.argmax(y_pred, axis=1)
+        if y_test.ndim > 1:
+            y_test = np.argmax(y_test, axis=1)
+    elif y_pred.ndim > 1:  # binary case from keras
+        y_pred = (y_pred > 0.5).astype(int).flatten()
+        if y_test.ndim > 1:
+            y_test = np.argmax(y_test, axis=1)
+
+    st.subheader("✅ Summary Metrics")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Accuracy", f"{metrics['accuracy']:.4f}")
+    col2.metric("Precision", f"{metrics['precision']:.4f}")
+    col3.metric("Recall", f"{metrics['recall']:.4f}")
+    col4.metric("F1 Score", f"{metrics['f1_score']:.4f}")
+
+    st.markdown("---")
+
+    st.subheader("📑 Classification Report")
+    report_dict = classification_report(
+        y_test, y_pred, output_dict=True, zero_division=0)
+    report_df = pd.DataFrame(report_dict).transpose()
+    st.dataframe(report_df.style.background_gradient(
+        cmap="Blues").format("{:.2f}"))
+
+    st.markdown("---")
+
+    st.subheader("🔍 Confusion Matrix")
+    cm = confusion_matrix(y_test, y_pred)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, ax=ax)
+    ax.set_xlabel("Predicted Labels")
+    ax.set_ylabel("True Labels")
+    st.pyplot(fig)
+
+
+async def toaster():
+    st.toast("Training Complete")
+
 
 def debug_info():
 
@@ -227,7 +296,7 @@ def debug_info():
                 disp_dct[k[:20]] = v
             else:
                 try:
-                    disp_dct[k[:20]] = v[:100]
+                    disp_dct[k[:20]] = v[:50]
                 except:
                     disp_dct[k[:20]] = v
 

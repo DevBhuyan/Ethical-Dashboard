@@ -14,7 +14,8 @@ from pages import (
     view_dataset,
     edit_data,
     model_home,
-    view_model
+    view_model,
+    training_results
 )
 from session_state_attrib import (
     init,
@@ -69,6 +70,9 @@ def main():
 
     elif ss.page == "view_model":
         view_model()
+
+    elif ss.page == "training_results":
+        training_results()
 
     else:
         st.subheader("You have reached a dead-end")
