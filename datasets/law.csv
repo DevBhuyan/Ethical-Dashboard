@@ -1,4 +1,4 @@
-decile1b,decile3,ID,decile1,sex,race,cluster,lsat,ugpa,zfygpa,DOB_yr,grad,zgpa,bar1,bar1_yr,bar2,bar2_yr,fulltime,fam_inc,age,gender,parttime,male,race1,race2,Dropout,other,asian,black,hisp,pass_bar,bar,bar_passed,tier,index6040,indxgrp,indxgrp2,dnn_bar_pass_prediction,gpa
+decile1b,decile3,ID,decile1,sex,race,cluster,lsat,ugpa,zfygpa,DOB_yr,grad,zgpa,bar1,bar1_yr,bar2,bar2_yr,fulltime,fam_inc,age,gender,parttime,male,race1,race2,Dropout,other,asian,black,hisp,pass_bar,bar,Class,tier,index6040,indxgrp,indxgrp2,dnn_bar_pass_prediction,gpa
 10,10,2,10,1,7,1,44,3.5,1.33,69,Y,1.88,P,7,P,94,1,5,-62,female,0,0,white,b white,NO,0,0,0,0,1,a Passed 1st time,TRUE,4,886.842082,g 700+,i 820+,0.9798045,3.5
 5,4,3,5,1,7,2,29,3.5,-0.11,69,Y,-0.57,P,7,P,94,1,4,-62,female,0,0,white,b white,NO,0,0,0,0,1,a Passed 1st time,TRUE,2,649.999987,f 640-700,f 640-700,0.9798045,3.5
 3,2,36,3,2,7,3,36,3.5,-0.64,65,Y,-1.12,P,7,P,94,1,1,-58,male,0,1,white,b white,NO,0,0,0,0,1,a Passed 1st time,TRUE,3,760.526298,g 700+,h 760-820,0.9798045,3.5

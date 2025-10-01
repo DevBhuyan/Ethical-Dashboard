@@ -24,7 +24,9 @@ def eager_load_all_models(names_only: bool = False):
 
     src = './base_models/'
 
-    base_model_files = os.listdir(src)
+    base_model_files = [i
+                        for i in os.listdir(src)
+                        if not i.startswith('_')]
 
     if names_only:
         return [model[:-3]
@@ -32,6 +34,7 @@ def eager_load_all_models(names_only: bool = False):
 
     model_builders = {}
     for model_file in base_model_files:
+
         model_name = model_file[:-3]
         file_path = src + model_file
 

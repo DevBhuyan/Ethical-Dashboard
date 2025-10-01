@@ -28,9 +28,9 @@ def train(
     df = ss.selected_dataset
     model = ss.selected_model
 
-    # Assume last column is target
-    X = df.iloc[:, :-1].values
-    y = df.iloc[:, -1].values
+    # Use 'Class' column as target
+    y = df["Class"].values
+    X = df.drop(columns=["Class"]).values
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,

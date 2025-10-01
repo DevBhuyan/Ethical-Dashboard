@@ -11,16 +11,34 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import os
 from session_state_attrib import ss
+from sklearn.impute import SimpleImputer
 
 
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
-
+    """
+    Preprocess dataset:
+    1. Label encode categorical features
+    2. Impute missing values (numerical: mean, categorical: most frequent)
+    Returns: preprocessed df
+    """
+    df = df.copy()
     label_encoders = {}
+
+    bool_cols = df.select_dtypes(include='bool').columns
+    df[bool_cols] = df[bool_cols].astype(int)
+
     for col in df.columns:
-        if df[col].dtype == 'object':  # categorical string column
+        if df[col].dtype == 'object':
             le = LabelEncoder()
             df[col] = le.fit_transform(df[col].astype(str))
             label_encoders[col] = le
+
+    for col in df.columns:
+        if df[col].dtype in [float, int]:
+            imputer = SimpleImputer(strategy='mean')
+        else:  # categorical already encoded as int
+            imputer = SimpleImputer(strategy='most_frequent')
+        df[col] = imputer.fit_transform(df[[col]])
 
     ss.label_encoders = label_encoders
 

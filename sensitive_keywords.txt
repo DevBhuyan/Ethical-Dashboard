@@ -2,3 +2,7 @@ gender
 sex
 race
 age
+male
+asian
+black
+hisp
