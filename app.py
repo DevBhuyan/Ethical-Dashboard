@@ -15,7 +15,10 @@ from pages import (
     edit_data,
     model_home,
     view_model,
-    training_results
+    training_results,
+    dev_console,
+    ethical_eval,
+    previous_config
 )
 from session_state_attrib import (
     init,
@@ -57,6 +60,8 @@ def main():
     st.title("Ethical AI Dashboard")
 
     if ss.page == "data_home":
+        previous_config()
+
         data_home()
 
     elif ss.page == "view_dataset":
@@ -74,9 +79,18 @@ def main():
     elif ss.page == "training_results":
         training_results()
 
+    elif ss.page == "dev_console":
+        dev_console()
+
+    elif ss.page == "ethical_eval":
+        ethical_eval()
+
     else:
         st.subheader("You have reached a dead-end")
         st.error(f"There is no page named {ss.page}")
+        if st.button("Back to home", type="primary"):
+            ss.page = "data_home"
+            st.rerun()
         st.snow()
 
     debug_info()

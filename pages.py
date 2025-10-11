@@ -7,15 +7,28 @@ Created on Fri Sep 26 01:13:51 2025
 """
 
 
-from sklearn.metrics import classification_report, confusion_matrix
+from ethical_eval_pages import (
+    fairness_eval,
+    robustness_eval,
+    privacy_eval,
+    explainability_eval
+)
+import subprocess
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix
+)
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import asyncio
-import inspect
 import streamlit as st
-from session_state_attrib import ss
+from session_state_attrib import (
+    ss,
+    save_configuration_as_previous,
+    load_previous_configuration
+)
 from load_datasets import (
     load_all_datasets,
     load_specific_dataset,
@@ -35,6 +48,28 @@ from train_model import (
     train,
     eval_model
 )
+from model_viewer import (
+    model_details,
+    model_card
+)
+
+
+def previous_config():
+
+    if load_previous_configuration():
+
+        with st.expander("Previous Configuration", expanded=True):
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                data_card(ss.selected_dataset, freeze_dataset=True)
+
+            with col2:
+                model_card()
+
+            with col3:
+                training_card()
 
 
 def data_home():
@@ -63,7 +98,7 @@ def data_home():
     )
 
     if upload:
-        ss.selected_dataset_name = "Custom"
+        ss.selected_dataset_name = upload.name
         ss.selected_dataset = load_dataset_from_st_upload(upload)
         ss.page = "view_dataset"
         st.rerun()
@@ -132,7 +167,8 @@ def model_home():
     with col1:
 
         st.subheader("Input data")
-        data_card(ss.selected_dataset)
+        with st.expander("", expanded=True):
+            data_card(ss.selected_dataset)
 
     with col2:
         st.subheader("Select a Base Model to train on the data")
@@ -142,6 +178,7 @@ def model_home():
         choice = st.selectbox('datasets', names)
 
         if choice != "Select a model":
+            ss.selected_model_name = choice
             ss.selected_model = lazy_load_model(choice)[choice]
             ss.page = "view_model"
             st.rerun()
@@ -154,63 +191,15 @@ def model_home():
         )
 
         if upload:
+            ss.selected_model_name = upload.name
             ss.selected_model = load_model_from_st_upload(upload)
             ss.page = "view_model"
             st.rerun()
 
 
 def view_model():
-    """Display useful information about a loaded model in Streamlit."""
 
-    model = ss.selected_model
-
-    st.subheader("Model Summary")
-    st.write(f"**Type:** {type(model)}")
-
-    if isinstance(model, dict):
-        st.info("Model appears to be raw tensors (from safetensors).")
-        st.write(f"Number of tensors: {len(model)}")
-        for name, tensor in list(model.items())[:5]:  # Show a few keys
-            st.write(f"- {name}: shape {tuple(tensor.shape)}")
-        if len(model) > 5:
-            st.caption(f"... and {len(model) - 5} more tensors.")
-        return
-
-    if "keras" in str(type(model)).lower():
-        st.success("Detected Keras model ✅")
-        try:
-            stringlist = []
-            model.summary(print_fn=lambda x: stringlist.append(x))
-            st.text("\n".join(stringlist))
-        except Exception:
-            st.write("Unable to display Keras summary.")
-
-    elif hasattr(model, "get_params"):
-        st.success("Detected scikit-learn compatible model ✅")
-        params = model.get_params()
-        st.write("**Parameters:**")
-        st.json(params)
-
-    st.subheader("Available Methods")
-    methods = [
-        name
-        for name, func in inspect.getmembers(
-            model,
-            predicate=inspect.ismethod
-        )
-        if not name.startswith("_")
-    ]
-    st.write(methods)
-
-    # Check if trainable
-    if hasattr(model, "fit") or hasattr(model, "train"):
-        st.success("This model is trainable (has `fit` or `train`).")
-        # Inspect signature
-        candidate = model.fit if hasattr(model, "fit") else model.train
-        sig = inspect.signature(candidate)
-        st.write(f"Signature: `{candidate.__name__}{sig}`")
-    else:
-        st.warning("This model does not expose `fit` or `train` method.")
+    model_details()
 
     _, col1, col2, _ = st.columns([2, 3, 3, 2])
 
@@ -231,14 +220,52 @@ def view_model():
             st.rerun()
 
 
+def training_card():
+
+    st.title("📊 Model Evaluation Results")
+
+    if not hasattr(ss, "eval_metrics"):
+        st.warning(
+            "⚠️ No evaluation results found. Please train and evaluate a model first."
+        )
+
+        return
+
+    save_configuration_as_previous()
+
+    metrics = ss.eval_metrics
+
+    st.subheader("✅ Summary Metrics")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Accuracy", f"{metrics['accuracy']:.4f}")
+    col2.metric("Precision", f"{metrics['precision']:.4f}")
+    col3.metric("Recall", f"{metrics['recall']:.4f}")
+    col4.metric("F1 Score", f"{metrics['f1_score']:.4f}")
+
+    col1, col2 = st.columns(2)
+
+    with col2:
+        if st.button("Proceed to Ethical Evaluation",
+                     use_container_width=True):
+            with st.spinner("Training model....\nThis may take a while"):
+                train()
+            asyncio.run(toaster())
+            ss.page = "ethical_eval"
+            st.rerun()
+
+
 def training_results():
     st.title("📊 Model Evaluation Results")
     eval_model()
 
     if not hasattr(ss, "eval_metrics"):
         st.warning(
-            "⚠️ No evaluation results found. Please train and evaluate a model first.")
+            "⚠️ No evaluation results found. Please train and evaluate a model first."
+        )
+
         return
+
+    save_configuration_as_previous()
 
     metrics = ss.eval_metrics
     y_test = ss.y_test
@@ -300,22 +327,108 @@ def training_results():
             st.rerun()
 
 
+def ethical_eval():
+
+    tab_names = [
+        "Fairness",
+        "Robustness",
+        "Privacy",
+        "Explainability"
+    ]
+
+    tabs = st.tabs(tab_names)
+
+    ethical_pages = [
+        fairness_eval,
+        robustness_eval,
+        privacy_eval,
+        explainability_eval
+    ]
+
+    for idx, tab in enumerate(tabs):
+        with tab:
+            ethical_pages[idx]()
+
+
 async def toaster():
     st.toast("Training Complete")
+
+
+def run_command_live(command, stop_flag):
+    """Run a command and yield lines of output in real time."""
+    process = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+
+    for line in process.stdout:
+        if stop_flag["stop"]:
+            process.terminate()
+            yield "\n❌  Command cancelled by user."
+            break
+        yield line.rstrip()
+    process.wait()
+
+
+def dev_console(secret_key="1234"):
+    st.markdown("### 🧠 Developer Console")
+
+    if "console_unlocked" not in st.session_state:
+        st.session_state.console_unlocked = False
+    if not st.session_state.console_unlocked:
+        key = st.text_input("🔐 Enter Developer Key", type="password")
+        if key == secret_key:
+            st.session_state.console_unlocked = True
+            st.success("✅ Console unlocked")
+        else:
+            st.stop()
+
+    st.caption("Type a one-line Linux command and press Enter.")
+    command = st.text_input(
+        ">", placeholder="e.g. pip install streamlit", key="cmd_input")
+
+    if "stop_flag" not in st.session_state:
+        st.session_state.stop_flag = {"stop": False}
+
+    stop_button = st.button("🛑 Stop")
+
+    if stop_button:
+        st.session_state.stop_flag["stop"] = True
+
+    if command:
+        st.session_state.stop_flag["stop"] = False
+        output_area = st.empty()
+        output_lines = []
+
+        for line in run_command_live(command, st.session_state.stop_flag):
+            output_lines.append(line)
+            output_area.code("\n".join(output_lines), language="bash")
+
+        st.success("✅ Done")
+        st.session_state.cmd_input = ""  # clear input
 
 
 def debug_info():
 
     with st.sidebar:
+
+        if st.button("Dev Console"):
+            ss.page = "dev_console"
+            st.rerun()
+
         st.subheader("Current Session State")
         disp_dct = {}
         for k, v in ss.items():
             if isinstance(v, bool):
-                disp_dct[k[:20]] = v
+                disp_dct[k[:25]] = v
             else:
                 try:
-                    disp_dct[k[:20]] = v[:50]
+                    disp_dct[k[:25]] = v[:50]
                 except:
-                    disp_dct[k[:20]] = v
+                    disp_dct[k[:25]] = v
 
         st.write(disp_dct)

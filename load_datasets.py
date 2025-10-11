@@ -22,16 +22,25 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns: preprocessed df
     """
     df = df.copy()
-    label_encoders = {}
 
     bool_cols = df.select_dtypes(include='bool').columns
     df[bool_cols] = df[bool_cols].astype(int)
 
-    for col in df.columns:
-        if df[col].dtype == 'object':
-            le = LabelEncoder()
-            df[col] = le.fit_transform(df[col].astype(str))
-            label_encoders[col] = le
+    cat_cols = df.select_dtypes(include=["object", "category"]).columns
+
+    category_maps = {}
+
+    for col in cat_cols:
+
+        le = LabelEncoder()
+
+        df[col] = le.fit_transform(df[col].astype(str))
+
+        classes = le.classes_
+        encoded = le.transform(classes)
+        mapping = dict(zip(encoded, classes))
+
+        category_maps[col] = mapping
 
     for col in df.columns:
         if df[col].dtype in [float, int]:
@@ -40,7 +49,7 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
             imputer = SimpleImputer(strategy='most_frequent')
         df[col] = imputer.fit_transform(df[[col]])
 
-    ss.label_encoders = label_encoders
+    ss.category_maps = category_maps
 
     return df
 

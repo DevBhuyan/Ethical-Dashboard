@@ -4,3 +4,5 @@ datasets/annonymized-credit-card.csv
 certificates
 __pycache__
 .streamlit
+catboost_info
+previous_config

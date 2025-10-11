@@ -29,8 +29,8 @@ def train(
     model = ss.selected_model
 
     # Use 'Class' column as target
-    y = df["Class"].values
-    X = df.drop(columns=["Class"]).values
+    y = df["Class"]
+    X = df.drop(columns=["Class"])
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -59,6 +59,7 @@ def train(
         raise TypeError("Unsupported model type")
 
     ss.trained_model = model
+    ss.X_train, ss.y_train = X_train, y_train
     ss.X_test, ss.y_test = X_test, y_test
 
 

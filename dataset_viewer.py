@@ -22,11 +22,11 @@ from session_state_attrib import ss
 DEFAULT_CONTAINER_HEIGHT = 400
 
 
-def data_card(df):
+def data_card(df, freeze_dataset: bool = False):
 
-    with st.expander("", expanded=True):
+    names = load_all_datasets(names_only=True)
 
-        names = load_all_datasets(names_only=True)
+    if not freeze_dataset:
         choice = st.selectbox(
             label='Selected Dataset',
             options=names,
@@ -40,22 +40,24 @@ def data_card(df):
             )[choice]
             st.rerun()
 
-        st.write(f"Dataset name: **{ss.selected_dataset_name}**")
+    st.write(f"Dataset name: **{ss.selected_dataset_name}**")
 
-        sensitive_attributes = infer_sensitive_attributes(df)
+    sensitive_attributes = infer_sensitive_attributes(df)
 
-        st.info(
-            f"Contains {df.shape[0]} **rows** {df.shape[1]} **columns** | data points divided into {unique_count(df['Class'])} **Classes**"
-        )
-        if sensitive_attributes:
-            if len(sensitive_attributes) > 1:
-                st.success(
-                    f"Contains {len(sensitive_attributes)} sensitive attributes: {', '.join(sensitive_attributes)}"
-                )
-            else:
-                st.success(
-                    f"Contains {len(sensitive_attributes)} sensitive attributes: {sensitive_attributes[0]}"
-                )
+    ss.sensitive_attributes[ss.selected_dataset_name] = sensitive_attributes
+
+    st.info(
+        f"Contains {df.shape[0]} **rows** {df.shape[1]} **columns** | data points divided into {unique_count(df['Class'])} **Classes**"
+    )
+    if sensitive_attributes:
+        if len(sensitive_attributes) > 1:
+            st.success(
+                f"Contains {len(sensitive_attributes)} sensitive attributes: {', '.join(sensitive_attributes)}"
+            )
+        else:
+            st.success(
+                f"Contains {len(sensitive_attributes)} sensitive attributes: {sensitive_attributes[0]}"
+            )
 
 
 def display_dataset(df: pd.DataFrame):
