@@ -25,6 +25,8 @@ def filter_installed_packages(imports: set):
     for lib in imports:
         if lib not in os.listdir():
             filtered_imports.add(PACKAGE_MAPPING.get(lib, lib))
+        if lib == 'pandas':
+            filtered_imports.add('openpyxl')
     return filtered_imports
 
 
