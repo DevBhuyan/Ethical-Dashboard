@@ -336,6 +336,10 @@ def ethical_eval():
         "Explainability"
     ]
 
+    if st.button("Back to Home", type="primary"):
+        ss.page = "data_home"
+        st.rerun()
+
     tabs = st.tabs(tab_names)
 
     ethical_pages = [

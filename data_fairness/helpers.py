@@ -96,13 +96,19 @@ def plot_wo_save(data: dict,
 
         group_metrics = {}
         group_indices = data["X_test"][data["X_test"][sensitive_feature]
-                                       == group_value].index
+                                       == float(group_value)].index
         gr0_indices = gr0(data["y_test"], group_indices)
         indices.append(gr0_indices)
         for metric_name, metric_func in metrics.items():
             if metric_name not in ["accuracy_score_diff", "false_positive_rate_ratio", "false_negative_rate_ratio", "demographic_parity_difference", "equalized_odds_diff"]:
-                group_metrics[metric_name] = metric_func(
-                    data["y_test"].iloc[gr0_indices], pred[gr0_indices])
+                try:
+                    group_metrics[metric_name] = metric_func(
+                        data["y_test"].iloc[gr0_indices],
+                        pred[gr0_indices]
+                    )
+                except:
+                    raise Exception(
+                        f"data['y_test'].iloc[gr0_indices]: {data['y_test'].iloc[gr0_indices]} | pred[gr0_indices]: {pred[gr0_indices]}")
         results[group_label] = group_metrics
 
     results["INFO"] = "All values mentioned below are computed in percentage (%)"

@@ -7,7 +7,6 @@ Created on Mon Jan 27 01:15:20 2025
 """
 
 
-import sys
 import os
 import re
 import pkg_resources
@@ -17,98 +16,57 @@ PACKAGE_MAPPING = {
     "sklearn": "scikit-learn",
     "cv2": "opencv-python",
     "yaml": "pyyaml",
-    "PIL": "pillow",
+    "PIL": "pillow"
 }
 
 
-def extract_imports(file_path: str):
-    '''
-
-
-    Parameters
-    ----------
-    file_path : str
-        DESCRIPTION.
-
-    Returns
-    -------
-    imports : TYPE
-        DESCRIPTION.
-
-    '''
-
-    imports = set()
-    with open(file_path, 'r', encoding='utf-8') as file:
-        for line in file:
-            # Match `import module` or `from module import ...`
-            # TODO: Need to add support for bracket multiline imports
-            match = re.match(r'^(?:from|import)\s+([a-zA-Z0-9_\.]+)', line)
-            if match:
-                module = match.group(1).split('.')[0]
-                imports.add(module)
-
-    return imports
-
-
-'''
-# FIXME: 
-    ```
-    Warning: Library 'os' is not installed.
-    Warning: Library 're' is not installed.
-    Warning: Library 'pkg_resources' is not installed.
-    Warning: Library 'sklearn' is not installed.
-    ```
-    
-    Need to be able to handle python base packages and mapping
-'''
-
-
 def filter_installed_packages(imports: set):
-    """
-    Filters out standard library modules from imports.
-    Maps known mismatched library names.
-    """
-
-    # Python 3.10+ provides sys.stdlib_module_names; fallback for older versions
-    built_in_modules = sys.stdlib_module_names if hasattr(
-        sys, 'stdlib_module_names') else set()
-
     filtered_imports = set()
     for lib in imports:
-        if lib not in built_in_modules:  # Ignore built-in modules
+        if lib not in os.listdir():
             filtered_imports.add(PACKAGE_MAPPING.get(lib, lib))
-
     return filtered_imports
 
 
 def get_library_versions(imports: set):
-    '''
-
-
-    Parameters
-    ----------
-    imports : set
-        DESCRIPTION.
-
-    Returns
-    -------
-    library_versions : TYPE
-        DESCRIPTION.
-
-    '''
-
     library_versions = {}
     for lib in imports:
         try:
-            version = pkg_resources.get_distribution(lib).version
-            library_versions[lib] = version
+            library_versions[lib] = pkg_resources.get_distribution(lib).version
         except pkg_resources.DistributionNotFound:
             print(f"Warning: Library '{lib}' is not installed.")
-            # TODO: Need to add mapping of lib-names. For example, it cannot detect sklearn, which is installed as scikit-learn in pip
         except Exception as e:
             print(f"Error while fetching version for '{lib}': {e}")
-
     return library_versions
+
+
+def get_all_py_files(root_dir="."):
+    py_files = []
+    for dirpath, _, filenames in os.walk(root_dir):
+        for f in filenames:
+            if f.endswith(".py"):
+                py_files.append(os.path.join(dirpath, f))
+    return py_files
+
+
+def extract_imports(file_path: str):
+    imports = set()
+    with open(file_path, 'r', encoding='utf-8') as f:
+        code = f.read()
+
+    # Remove comments
+    code = re.sub(r'#.*', '', code)
+
+    # Collapse bracketed multiline imports into a single line
+    code = re.sub(r'\(\s*([^)]*?)\s*\)',
+                  lambda m: m.group(1).replace("\n", " "), code, flags=re.DOTALL)
+
+    # Match `import module` and `from module import ...`
+    pattern = re.compile(r'^(?:from|import)\s+([a-zA-Z0-9_\.]+)', re.MULTILINE)
+    for match in pattern.findall(code):
+        imports.add(match.split('.')[0])
+
+    return imports
 
 
 def create_requirements_file(library_versions: dict,
@@ -131,6 +89,8 @@ def create_requirements_file(library_versions: dict,
     new_content = "\n".join(f"{lib}=={version}" for lib,
                             version in library_versions.items())
 
+    print(new_content)
+
     if os.path.exists(output_path):
         with open(output_path, 'r') as req_file:
             existing_content = req_file.read().strip()
@@ -142,31 +102,24 @@ def create_requirements_file(library_versions: dict,
 
     with open(output_path, 'w') as req_file:
         req_file.write(new_content + "\n")
+
     print(f"requirements.txt created/updated at {output_path}")
 
 
 def main():
-    '''
-
-
-    Returns
-    -------
-    None.
-
-    '''
-
-    py_files = [f
-                for f in os.listdir('.')
-                if f.endswith('.py')]
+    py_files = get_all_py_files(".")
     all_imports = set()
 
     for py_file in py_files:
-        imports = extract_imports(py_file)
+        imports = [
+            i.strip()
+            for i in extract_imports(py_file)
+            if i.strip()
+        ]
         all_imports.update(imports)
 
     filtered_imports = filter_installed_packages(all_imports)
     library_versions = get_library_versions(filtered_imports)
-
     create_requirements_file(library_versions)
 
 
