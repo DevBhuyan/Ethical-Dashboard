@@ -1,4 +1,4 @@
-Two_yr_Recidivism,Number_of_Priors,score_factor,Age_Above_FourtyFive,Age_Below_TwentyFive,African_American,Asian,Hispanic,Native_American,Other,Female,Misdemeanor
+Class,Number_of_Priors,score_factor,Age_Above_FourtyFive,Age_Below_TwentyFive,African_American,Asian,Hispanic,Native_American,Other,Female,Misdemeanor
 0,0,0,1,0,0,0,0,0,1,0,0
 1,0,0,0,0,1,0,0,0,0,0,0
 1,4,0,0,1,1,0,0,0,0,0,0

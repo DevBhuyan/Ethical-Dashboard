@@ -133,9 +133,12 @@ def infer_sensitive_attributes(df: pd.DataFrame):
         ]
 
     sensitive_attrs = []
+    sensitive_attrs = []
     for col in df.columns:
-        if col.lower() in sensitive_kws:
-            sensitive_attrs.append(col)
+        for kw in sensitive_kws:
+            if kw.lower() in col.lower():  # substring match
+                sensitive_attrs.append(col)
+                break  # stop checking once matched
 
     return sensitive_attrs
 

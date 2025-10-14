@@ -18,7 +18,8 @@ from pages import (
     training_results,
     dev_console,
     ethical_eval,
-    previous_config
+    previous_config,
+    browse_dataset
 )
 from session_state_attrib import (
     init,
@@ -30,7 +31,7 @@ st.set_page_config(
     page_title="Ethical AI - Dashboard",
     page_icon="🌱",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
     menu_items={
         'Get Help': 'mailto:devvjiit.bhuyan@gmail.com',
         'Report a bug': 'mailto:devvjiit.bhuyan@gmail.com',
@@ -84,6 +85,9 @@ def main():
 
     elif ss.page == "ethical_eval":
         ethical_eval()
+
+    elif ss.page == "browse_dataset":
+        browse_dataset()
 
     else:
         st.subheader("You have reached a dead-end")

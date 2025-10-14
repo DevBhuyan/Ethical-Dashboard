@@ -17,12 +17,16 @@ from load_datasets import (
     load_specific_dataset
 )
 from session_state_attrib import ss
+from time import perf_counter_ns
 
 
 DEFAULT_CONTAINER_HEIGHT = 400
 
 
-def data_card(df, freeze_dataset: bool = False):
+def data_card(df,
+              freeze_dataset: bool = False,
+              interactive: bool = False,
+              dataset_name: str = ""):
 
     names = load_all_datasets(names_only=True)
 
@@ -30,7 +34,8 @@ def data_card(df, freeze_dataset: bool = False):
         choice = st.selectbox(
             label='Selected Dataset',
             options=names,
-            index=names.index(ss.selected_dataset_name)
+            index=names.index(ss.selected_dataset_name),
+            key=str(perf_counter_ns())
         )
 
         if choice != ss.selected_dataset_name:
@@ -40,7 +45,10 @@ def data_card(df, freeze_dataset: bool = False):
             )[choice]
             st.rerun()
 
-    st.write(f"Dataset name: **{ss.selected_dataset_name}**")
+    if not dataset_name:
+        st.write(f"Dataset name: **{ss.selected_dataset_name}**")
+    else:
+        st.write(f"Dataset name: **{dataset_name}**")
 
     sensitive_attributes = infer_sensitive_attributes(df)
 
@@ -58,6 +66,71 @@ def data_card(df, freeze_dataset: bool = False):
             st.success(
                 f"Contains {len(sensitive_attributes)} sensitive attributes: {sensitive_attributes[0]}"
             )
+
+
+def dataset_card(df: pd.DataFrame,
+                 dataset_name: str):
+
+    st.write("### Dataset Overview")
+
+    data_card(df,
+              freeze_dataset=True,
+              dataset_name=dataset_name)
+
+    col_info = pd.DataFrame({
+        "Column": df.columns,
+        "Data Type": [df[col].dtype for col in df.columns],
+        "Missing Values": [df[col].isna().sum() for col in df.columns],
+        "Unique Values": [df[col].nunique() for col in df.columns]
+    })
+
+    numeric_cols = df.select_dtypes(include='number').columns
+
+    with st.expander("Column Information"):
+        st.write("**Column Information:**")
+        st.dataframe(col_info,
+                     use_container_width=True,
+                     hide_index=True)
+
+    if len(numeric_cols) > 0:
+
+        with st.expander("Numeric Summary"):
+            st.write("**Numeric Summary:**")
+            st.dataframe(df[numeric_cols].describe().T,
+                         use_container_width=True)
+
+    categorical_cols = df.select_dtypes(include=['object', 'category']).columns
+    if len(categorical_cols) > 0:
+        with st.expander("Categorical Summary"):
+            st.write("**Categorical Summary:**")
+            cat_summary = pd.DataFrame({
+                col: df[col].value_counts().head(5).to_dict()
+                for col in categorical_cols
+            }).T
+            st.dataframe(cat_summary,
+                         use_container_width=True)
+
+    with st.expander("Dataset Preview"):
+        st.write("**Preview of Data (first 10 rows):**")
+        st.dataframe(df.head(10),
+                     use_container_width=True)
+
+    with st.expander("View Column wise data"):
+        st.write("**Select columns to display:**")
+        selected_cols = st.multiselect(
+            "Columns",
+            df.columns.tolist(),
+            default=df.columns.tolist()
+        )
+        st.dataframe(df[selected_cols],
+                     use_container_width=True)
+
+    if st.button(f"Select {dataset_name}",
+                 type="primary",
+                 use_container_width=True):
+        ss.selected_dataset_name = dataset_name
+        ss.page = "view_dataset"
+        st.rerun()
 
 
 def display_dataset(df: pd.DataFrame):

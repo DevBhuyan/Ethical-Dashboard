@@ -42,7 +42,8 @@ from load_models import (
 from dataset_viewer import (
     display_dataset,
     edit_dataset,
-    data_card
+    data_card,
+    dataset_card
 )
 from train_model import (
     train,
@@ -106,6 +107,20 @@ def data_home():
         ss.selected_dataset = load_dataset_from_st_upload(upload)
         ss.page = "view_dataset"
         st.rerun()
+
+
+def browse_dataset():
+
+    cols = st.columns(5)
+
+    all_datasets = load_all_datasets()
+
+    for idx, (df_name, df) in enumerate(all_datasets.items()):
+
+        with cols[idx % 5]:
+            with st.container(height=650):
+                dataset_card(df,
+                             df_name)
 
 
 def view_dataset():

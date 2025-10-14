@@ -3,6 +3,14 @@ sex
 race
 age
 male
+female
 asian
 black
 hisp
+african
+american	
+asian	
+hispanic	
+native
+american
+birth

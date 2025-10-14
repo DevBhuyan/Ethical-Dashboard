@@ -81,8 +81,31 @@ def model_details():
     elif hasattr(model, "get_params"):
         st.success("Detected scikit-learn compatible model ✅")
         params = model.get_params()
-        st.write("**Parameters:**")
-        st.json(params)
+        filled_out_params = {
+            k: v for k, v in params.items()
+            if v and not (
+                isinstance(v, float)
+                and math.isnan(v)
+            )
+        }
+
+        unfilled_params = {
+            k: v for k, v in params.items()
+            if not v or (
+                isinstance(v, float)
+                and math.isnan(v)
+            )
+        }
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Set Parameters:**")
+            st.json(filled_out_params)
+
+        with col2:
+            st.write("**Unset Parameters:**")
+            st.json(unfilled_params)
 
     st.subheader("Available Methods")
     methods = [
