@@ -74,7 +74,11 @@ def previous_config():
 
 def data_home():
 
-    st.subheader("To start with, let us choose a Dataset:")
+    if not load_previous_configuration():
+        st.subheader("To start with, let us choose a Dataset:")
+
+    else:
+        st.subheader("Or select your own configuration")
 
     names = load_all_datasets(names_only=True)
     names.insert(0, "Select a dataset")
@@ -246,7 +250,8 @@ def training_card():
 
     with col2:
         if st.button("Proceed to Ethical Evaluation",
-                     use_container_width=True):
+                     use_container_width=True,
+                     type="primary"):
             with st.spinner("Training model....\nThis may take a while"):
                 train()
             asyncio.run(toaster())
@@ -420,6 +425,8 @@ def debug_info():
 
     with st.sidebar:
 
+        st.header("Debug Bar")
+
         if st.button("Dev Console"):
             ss.page = "dev_console"
             st.rerun()
@@ -435,4 +442,8 @@ def debug_info():
                 except:
                     disp_dct[k[:25]] = v
 
-        st.write(disp_dct)
+        try:
+            st.write(disp_dct)
+        except:
+            for k, v in disp_dct.items():
+                st.write({k: v})

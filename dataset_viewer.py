@@ -47,7 +47,7 @@ def data_card(df, freeze_dataset: bool = False):
     ss.sensitive_attributes[ss.selected_dataset_name] = sensitive_attributes
 
     st.info(
-        f"Contains {df.shape[0]} **rows** {df.shape[1]} **columns** | data points divided into {unique_count(df['Class'])} **Classes**"
+        f"Contains {df.shape[1] - 1} **features** and {df.shape[0]} **samples** | data points divided into {unique_count(df['Class'])} **Classes**"
     )
     if sensitive_attributes:
         if len(sensitive_attributes) > 1:

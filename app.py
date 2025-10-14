@@ -30,7 +30,7 @@ st.set_page_config(
     page_title="Ethical AI - Dashboard",
     page_icon="🌱",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
     menu_items={
         'Get Help': 'mailto:devvjiit.bhuyan@gmail.com',
         'Report a bug': 'mailto:devvjiit.bhuyan@gmail.com',
@@ -43,19 +43,19 @@ init()
 
 
 def main():
-    st.markdown(
-        """
-    <style>
-    /* Remove padding/margins around the main container */
-    .css-18e3th9 {padding: 0rem 1rem 0rem 1rem;}
-    /* Hide hamburger menu and footer (extra safety) */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    </style>
-    """,
-        unsafe_allow_html=True
-    )
+    # st.markdown(
+    #     """
+    # <style>
+    # /* Remove padding/margins around the main container */
+    # .css-18e3th9 {padding: 0rem 1rem 0rem 1rem;}
+    # /* Hide hamburger menu and footer (extra safety) */
+    # #MainMenu {visibility: hidden;}
+    # footer {visibility: hidden;}
+    # header {visibility: hidden;}
+    # </style>
+    # """,
+    #     unsafe_allow_html=True
+    # )
 
     st.title("Ethical AI Dashboard")
 

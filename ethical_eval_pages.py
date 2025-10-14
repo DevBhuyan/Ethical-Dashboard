@@ -7,6 +7,9 @@ Created on Sat Oct 11 23:59:23 2025
 """
 
 
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import accuracy_score
+import pandas as pd
 from sklearn.metrics import pairwise_distances
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,12 +47,165 @@ def fairness_eval():
         st.write(results)
 
 
-def robustness_eval():
-    pass
-
-
 def privacy_eval():
-    pass
+    st.subheader("🔒 Privacy Evaluation")
+    st.markdown("""
+    This component simulates a **Membership Inference Attack (MIA)** baseline.
+    It measures how distinguishable training samples are from unseen data using model outputs.
+    """)
+
+    model = ss.trained_model
+    X_train = ss.X_train
+    X_test = ss.X_test
+
+    n_samples = min(300, len(X_train), len(X_test))
+    X_member = X_train.sample(n_samples, random_state=42)
+    X_nonmember = X_test.sample(n_samples, random_state=42)
+    y_member = np.ones(n_samples)
+    y_nonmember = np.zeros(n_samples)
+
+    X_attack = pd.concat([X_member, X_nonmember])
+    y_attack = np.concatenate([y_member, y_nonmember])
+
+    # Compute probabilities or scores
+    with st.spinner("Computing model confidence scores..."):
+        if hasattr(model, "predict_proba"):
+            probs = model.predict_proba(X_attack)
+            if probs.shape[1] == 2:
+                scores = probs[:, 1]
+            else:
+                scores = probs.max(axis=1)
+        elif hasattr(model, "decision_function"):
+            scores = model.decision_function(X_attack)
+        else:
+            # fallback: use raw predictions
+            preds = model.predict(X_attack)
+            scores = preds.astype(
+                float) if preds.ndim == 1 else preds.max(axis=1)
+
+    # Evaluate attack success
+    auc = roc_auc_score(y_attack, scores)
+    st.metric("Membership Inference AUC", f"{auc:.3f}",
+              help="1.0 → full leakage, 0.5 → random guess. Lower = more private.")
+
+    # Histogram plot of confidence scores
+    fig, ax = plt.subplots(figsize=(5, 3))
+    ax.hist(scores[y_attack == 1], bins=20, alpha=0.6, label="Train (Members)")
+    ax.hist(scores[y_attack == 0], bins=20,
+            alpha=0.6, label="Test (Non-members)")
+    ax.set_title("Prediction Confidence Distribution")
+    ax.set_xlabel("Confidence Score")
+    ax.set_ylabel("Count")
+    ax.legend()
+    st.pyplot(fig)
+    plt.close(fig)
+
+    # Interpretation
+    if auc > 0.75:
+        st.error(
+            "⚠️ High privacy risk: Model outputs may leak training membership information.")
+    elif auc > 0.6:
+        st.warning("⚠️ Moderate privacy leakage risk detected.")
+    else:
+        st.success(
+            "✅ Good: Model appears privacy-safe under baseline membership attack.")
+
+    return {
+        "membership_auc": float(auc),
+        "n_samples": int(n_samples)
+    }
+
+
+def robustness_eval():
+    st.subheader("🛡️ Robustness Evaluation")
+    st.markdown("""
+    This section measures how stable your model is against input perturbations.
+    We add Gaussian noise to features and see how accuracy degrades.
+    """)
+
+    X_test = ss.X_test
+    y_test = ss.y_test
+    model = ss.trained_model
+
+    # Subsample for interactivity speed
+    sample_size = min(len(X_test), 300)
+    X_sample = X_test.sample(sample_size, random_state=42)
+    y_sample = y_test.loc[X_sample.index]
+
+    # User control
+    # --- Noise Level Selection ---
+    st.subheader("🔹 Choose Noise Levels")
+
+    option = st.radio(
+        "Noise selection mode:",
+        ["Preset", "Custom"],
+        horizontal=True
+    )
+
+    if option == "Preset":
+        noise_levels = st.multiselect(
+            "Select Gaussian noise stddev values",
+            options=[0.01, 0.05, 0.1, 0.2, 0.3],
+            default=[0.01, 0.05, 0.1],
+            help="You can select one or multiple noise levels to test robustness."
+        )
+    else:
+        noise_min, noise_max = st.slider(
+            "Noise range (stddev)",
+            0.0, 0.5, (0.01, 0.1),
+            help="Choose a range of noise values; multiple steps will be generated automatically."
+        )
+        steps = st.number_input("Number of intermediate steps", 1, 10, 3)
+        noise_levels = np.linspace(
+            noise_min, noise_max, steps).round(3).tolist()
+
+    st.write(f"Selected noise levels: {noise_levels}")
+
+    if not isinstance(noise_levels, (list, tuple, np.ndarray)):
+        noise_levels = [noise_levels]
+
+    # Base accuracy
+    with st.spinner("Evaluating baseline accuracy..."):
+        y_pred_clean = model.predict(X_sample)
+        acc_clean = accuracy_score(y_sample, y_pred_clean)
+    st.metric("Clean Data Accuracy", f"{acc_clean:.3f}")
+
+    accuracies, drops = [], []
+    progress = st.progress(0)
+    for i, eps in enumerate(noise_levels):
+        X_noisy = X_sample + np.random.normal(0, eps, X_sample.shape)
+        acc_noisy = accuracy_score(y_sample, model.predict(X_noisy))
+        accuracies.append(acc_noisy)
+        drops.append(acc_clean - acc_noisy)
+        progress.progress(int(((i+1)/len(noise_levels))*100))
+
+    # Plot results
+    fig, ax = plt.subplots(figsize=(5, 3))
+    ax.plot(noise_levels, accuracies, marker="o")
+    ax.set_xlabel("Noise Std. Dev.")
+    ax.set_ylabel("Accuracy")
+    ax.set_title("Robustness Curve: Accuracy vs. Noise")
+    st.pyplot(fig)
+    plt.close(fig)
+
+    # Display summary table
+    st.write("### Accuracy Degradation Summary")
+    df = pd.DataFrame({
+        "Noise Std": noise_levels,
+        "Accuracy": accuracies,
+        "Accuracy Drop": drops
+    })
+    st.dataframe(df.style.background_gradient(
+        cmap="RdYlGn_r", subset=["Accuracy Drop"]))
+
+    mean_drop = np.mean(drops)
+    st.success(f"**Average Accuracy Drop:** {mean_drop:.3f}")
+
+    return {
+        "baseline_accuracy": float(acc_clean),
+        "mean_accuracy_drop": float(mean_drop),
+        "accuracy_by_noise": dict(zip(noise_levels, accuracies))
+    }
 
 
 def explainability_eval():
