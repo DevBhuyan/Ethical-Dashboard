@@ -7,6 +7,8 @@ Created on Fri Sep 26 00:30:13 2025
 """
 
 
+import traceback
+from warnings import warn
 from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import os
@@ -14,7 +16,35 @@ from session_state_attrib import ss
 from sklearn.impute import SimpleImputer
 
 
-def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+def make_arrow_friendly(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    for col in df.columns:
+        dtype = df[col].dtype
+
+        # If it's a pandas extension dtype (nullable Int64, Float64, boolean, etc.)
+        if pd.api.types.is_extension_array_dtype(dtype):
+            # safest: convert extension dtype to plain Python objects (strings/None) for display
+            # or attempt to convert to numpy dtype if appropriate
+            if pd.api.types.is_integer_dtype(dtype) or pd.api.types.is_float_dtype(dtype):
+                # convert to numpy float64 (preserves NaN)
+                df[col] = pd.to_numeric(
+                    df[col], errors='coerce').astype('float64')
+            elif pd.api.types.is_bool_dtype(dtype):
+                # convert boolean extension -> native bool with None -> np.nan
+                df[col] = df[col].astype(object)
+            else:
+                df[col] = df[col].astype(object)
+
+        # If dtype is object but contains numpy scalars or dtype objects, normalize them to strings
+        elif pd.api.types.is_object_dtype(dtype):
+            # replace problematic numpy dtypes by plain str for display
+            df[col] = df[col].apply(lambda x: None if pd.isna(x) else (
+                str(x) if isinstance(x, (type(pd.NA),)) or hasattr(x, 'dtype') else x))
+
+    return df
+
+
+def preprocess_data(df: pd.DataFrame, dataset_name: str) -> pd.DataFrame:
     """
     Preprocess dataset:
     1. Label encode categorical features
@@ -32,6 +62,16 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
 
     for col in cat_cols:
 
+        unique_count = df[col].nunique()
+
+        if unique_count > 100:
+            warn(
+                f"Skipping LabelEncoding for column '{col}' "
+                f"in dataset '{dataset_name}' because it has {unique_count} unique values "
+                f"(> 100). Likely an ID, name, or timestamp field."
+            )
+            continue
+
         le = LabelEncoder()
 
         df[col] = le.fit_transform(df[col].astype(str))
@@ -47,9 +87,18 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
             imputer = SimpleImputer(strategy='mean')
         else:  # categorical already encoded as int
             imputer = SimpleImputer(strategy='most_frequent')
-        df[col] = imputer.fit_transform(df[[col]])
+        try:
+            df[col] = imputer.fit_transform(df[[col]])
+        except:
+            warn(
+                f"Couldn't impute {col} column of {dataset_name} dataset. Error was:"
+            )
+            traceback.print_exc()
 
-    ss.category_maps = category_maps
+    print(f"""Adding the following category mapping to session state for {dataset_name} dataset: 
+{category_maps}
+""")
+    ss.category_maps[dataset_name] = category_maps
 
     return df
 
@@ -75,7 +124,7 @@ def load_all_datasets(names_only: bool = False):
 
     else:
         dsets = {
-            ds_name: pd.read_csv(src + file)
+            ds_name: preprocess_data(pd.read_csv(src + file), ds_name)
             for ds_name, file in zip(
                 classification_dsets['Name'].values,
                 classification_dsets['Location'].values
@@ -99,7 +148,7 @@ def load_specific_dataset(dset_name: str = "",
     if dset_path and dset_name:
 
         return {
-            dset_name: preprocess_data(pd.read_csv(src + dset_path))
+            dset_name: preprocess_data(pd.read_csv(src + dset_path), dset_name)
         }
 
     elif dset_name:
@@ -108,7 +157,7 @@ def load_specific_dataset(dset_name: str = "",
         ]['Location'].values[0]
 
         return {
-            dset_name: preprocess_data(pd.read_csv(dset_path))
+            dset_name: preprocess_data(pd.read_csv(dset_path), dset_name)
         }
 
     elif dset_path:
@@ -117,7 +166,7 @@ def load_specific_dataset(dset_name: str = "",
         ]['Name'].values[0]
 
         return {
-            dset_name: preprocess_data(pd.read_csv(dset_path))
+            dset_name: preprocess_data(pd.read_csv(dset_path), dset_name)
         }
 
     else:
@@ -193,7 +242,7 @@ def validate_dataset(df: pd.DataFrame):
 def load_dataset_from_st_upload(upload):
 
     df = convert_upload_to_df(upload)
-    df = preprocess_data(df)
+    df = preprocess_data(df, upload.name)
     validate_dataset(df)
 
     return df

@@ -92,24 +92,46 @@ def plot_wo_save(data: dict,
     """
     results = {}
     indices = []
-    for group_value, group_label in data["category_maps"][sensitive_feature].items():
 
-        group_metrics = {}
-        group_indices = data["X_test"][data["X_test"][sensitive_feature]
-                                       == float(group_value)].index
-        gr0_indices = gr0(data["y_test"], group_indices)
-        indices.append(gr0_indices)
-        for metric_name, metric_func in metrics.items():
-            if metric_name not in ["accuracy_score_diff", "false_positive_rate_ratio", "false_negative_rate_ratio", "demographic_parity_difference", "equalized_odds_diff"]:
-                try:
-                    group_metrics[metric_name] = metric_func(
-                        data["y_test"].iloc[gr0_indices],
-                        pred[gr0_indices]
-                    )
-                except:
-                    raise Exception(
-                        f"data['y_test'].iloc[gr0_indices]: {data['y_test'].iloc[gr0_indices]} | pred[gr0_indices]: {pred[gr0_indices]}")
-        results[group_label] = group_metrics
+    if sensitive_feature in data["category_maps"]:
+        for group_value, group_label in data["category_maps"][sensitive_feature].items():
+
+            group_metrics = {}
+            group_indices = data["X_test"][data["X_test"][sensitive_feature]
+                                           == float(group_value)].index
+            gr0_indices = gr0(data["y_test"], group_indices)
+            indices.append(gr0_indices)
+            for metric_name, metric_func in metrics.items():
+                if metric_name not in ["accuracy_score_diff", "false_positive_rate_ratio", "false_negative_rate_ratio", "demographic_parity_difference", "equalized_odds_diff"]:
+                    try:
+                        group_metrics[metric_name] = metric_func(
+                            data["y_test"].iloc[gr0_indices],
+                            pred[gr0_indices]
+                        )
+                    except:
+                        raise Exception(
+                            f"data['y_test'].iloc[gr0_indices]: {data['y_test'].iloc[gr0_indices]} | pred[gr0_indices]: {pred[gr0_indices]}")
+            results[group_label] = group_metrics
+
+    else:
+        for group_label in data["X_test"][sensitive_feature].unique():
+
+            group_metrics = {}
+            group_indices = data["X_test"][data["X_test"][sensitive_feature]
+                                           == float(group_label)].index
+            gr0_indices = gr0(data["y_test"], group_indices)
+            indices.append(gr0_indices)
+            for metric_name, metric_func in metrics.items():
+                if metric_name not in ["accuracy_score_diff", "false_positive_rate_ratio", "false_negative_rate_ratio", "demographic_parity_difference", "equalized_odds_diff"]:
+                    try:
+                        group_metrics[metric_name] = metric_func(
+                            data["y_test"].iloc[gr0_indices],
+                            pred[gr0_indices]
+                        )
+                    except:
+                        raise Exception(
+                            f"data['y_test'].iloc[gr0_indices]: {data['y_test'].iloc[gr0_indices]} | pred[gr0_indices]: {pred[gr0_indices]}")
+            results[group_label] = group_metrics
 
     results["INFO"] = "All values mentioned below are computed in percentage (%)"
     for metric_name in ["accuracy_score_diff", "false_positive_rate_ratio", "false_negative_rate_ratio", "demographic_parity_difference", "equalized_odds_diff"]:
@@ -131,11 +153,17 @@ def plot_wo_save(data: dict,
 
     for i, metric in enumerate(["accuracy", "precision", "false_positive_rate", "false_negative_rate", "selection_rate", "count"]):
         values = []
-        for group_label in data["category_maps"][sensitive_feature].values():
-            values.append(results[group_label][metric])
+        if sensitive_feature in data["category_maps"]:
+            for group_label in data["category_maps"][sensitive_feature].values():
+                values.append(results[group_label][metric])
+            axes[i].bar(data["category_maps"]
+                        [sensitive_feature].values(), values)
+        else:
+            for group_label in data["X_test"][sensitive_feature].unique():
+                values.append(results[group_label][metric])
+            axes[i].bar(data["X_test"]
+                        [sensitive_feature].unique(), values)
 
-        axes[i].bar(data["category_maps"]
-                    [sensitive_feature].values(), values)
         axes[i].set_title(metric.capitalize())
         axes[i].set_ylabel(metric.capitalize())
 

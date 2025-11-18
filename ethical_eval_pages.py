@@ -35,7 +35,14 @@ def fairness_eval():
         "category_maps": ss.category_maps
     }
 
+    if data["y_test"].nunique() > 2:
+        st.error("Fairness scores can only be computed for binary classification datasets. The functionality to compute scores for multiclass datasets is being built.")
+        return
+
     for sensitive_feature in ss.sensitive_attributes[ss.selected_dataset_name]:
+
+        st.subheader(f"Sensitive Feature: {sensitive_feature}")
+
         fig, results = plot_wo_save(
             data,
             sensitive_feature,
@@ -45,6 +52,8 @@ def fairness_eval():
         )
         st.pyplot(fig)
         st.write(results)
+
+        st.divider()
 
 
 def privacy_eval():

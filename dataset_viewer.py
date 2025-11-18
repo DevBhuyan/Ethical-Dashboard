@@ -45,14 +45,14 @@ def data_card(df,
             )[choice]
             st.rerun()
 
-    if not dataset_name:
-        st.write(f"Dataset name: **{ss.selected_dataset_name}**")
-    else:
-        st.write(f"Dataset name: **{dataset_name}**")
-
     sensitive_attributes = infer_sensitive_attributes(df)
 
-    ss.sensitive_attributes[ss.selected_dataset_name] = sensitive_attributes
+    if not dataset_name:
+        st.write(f"Dataset name: **{ss.selected_dataset_name}**")
+        ss.sensitive_attributes[ss.selected_dataset_name] = sensitive_attributes
+    else:
+        st.write(f"Dataset name: **{dataset_name}**")
+        ss.sensitive_attributes[dataset_name] = sensitive_attributes
 
     st.info(
         f"Contains {df.shape[1] - 1} **features** and {df.shape[0]} **samples** | data points divided into {unique_count(df['Class'])} **Classes**"
@@ -71,8 +71,6 @@ def data_card(df,
 def dataset_card(df: pd.DataFrame,
                  dataset_name: str):
 
-    st.write("### Dataset Overview")
-
     data_card(df,
               freeze_dataset=True,
               dataset_name=dataset_name)
@@ -89,7 +87,7 @@ def dataset_card(df: pd.DataFrame,
     with st.expander("Column Information"):
         st.write("**Column Information:**")
         st.dataframe(col_info,
-                     use_container_width=True,
+                     width='stretch',
                      hide_index=True)
 
     if len(numeric_cols) > 0:
@@ -97,7 +95,7 @@ def dataset_card(df: pd.DataFrame,
         with st.expander("Numeric Summary"):
             st.write("**Numeric Summary:**")
             st.dataframe(df[numeric_cols].describe().T,
-                         use_container_width=True)
+                         width='stretch')
 
     categorical_cols = df.select_dtypes(include=['object', 'category']).columns
     if len(categorical_cols) > 0:
@@ -108,12 +106,12 @@ def dataset_card(df: pd.DataFrame,
                 for col in categorical_cols
             }).T
             st.dataframe(cat_summary,
-                         use_container_width=True)
+                         width='stretch')
 
     with st.expander("Dataset Preview"):
         st.write("**Preview of Data (first 10 rows):**")
         st.dataframe(df.head(10),
-                     use_container_width=True)
+                     width='stretch')
 
     with st.expander("View Column wise data"):
         st.write("**Select columns to display:**")
@@ -123,14 +121,7 @@ def dataset_card(df: pd.DataFrame,
             default=df.columns.tolist()
         )
         st.dataframe(df[selected_cols],
-                     use_container_width=True)
-
-    if st.button(f"Select {dataset_name}",
-                 type="primary",
-                 use_container_width=True):
-        ss.selected_dataset_name = dataset_name
-        ss.page = "view_dataset"
-        st.rerun()
+                     width='stretch')
 
 
 def display_dataset(df: pd.DataFrame):
@@ -161,19 +152,19 @@ def display_dataset(df: pd.DataFrame):
             with st.container(height=DEFAULT_CONTAINER_HEIGHT):
                 st.write("**Column Information:**")
                 st.dataframe(col_info,
-                             use_container_width=True,
+                             width='stretch',
                              hide_index=True)
 
         with col2:
             with st.container(height=DEFAULT_CONTAINER_HEIGHT):
                 st.write("**Numeric Summary:**")
                 st.dataframe(df[numeric_cols].describe().T,
-                             use_container_width=True)
+                             width='stretch')
 
     else:
         with st.container(height=DEFAULT_CONTAINER_HEIGHT):
             st.dataframe(col_info,
-                         use_container_width=True)
+                         width='stretch')
 
     categorical_cols = df.select_dtypes(include=['object', 'category']).columns
     if len(categorical_cols) > 0:
@@ -185,13 +176,13 @@ def display_dataset(df: pd.DataFrame):
                     for col in categorical_cols
                 }).T
                 st.dataframe(cat_summary,
-                             use_container_width=True)
+                             width='stretch')
 
     with col2:
         with st.expander("Dataset Preview"):
             st.write("**Preview of Data (first 10 rows):**")
             st.dataframe(df.head(10),
-                         use_container_width=True)
+                         width='stretch')
 
     with st.expander("View Column wise data"):
         st.write("**Select columns to display:**")
@@ -201,7 +192,7 @@ def display_dataset(df: pd.DataFrame):
             default=df.columns.tolist()
         )
         st.dataframe(df[selected_cols],
-                     use_container_width=True)
+                     width='stretch')
 
 
 def edit_dataset(df: pd.DataFrame) -> pd.DataFrame:
@@ -219,7 +210,7 @@ def edit_dataset(df: pd.DataFrame) -> pd.DataFrame:
     edited_df = st.data_editor(
         df,
         num_rows="dynamic",
-        use_container_width=True
+        width='stretch'
     )
 
     upload = st.file_uploader(

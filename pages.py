@@ -59,7 +59,7 @@ def previous_config():
 
     if load_previous_configuration():
 
-        with st.expander("Previous Configuration", expanded=True):
+        with st.expander("Previously used Configuration", expanded=True):
 
             col1, col2, col3 = st.columns(3)
 
@@ -115,68 +115,117 @@ def browse_dataset():
 
     all_datasets = load_all_datasets()
 
-    for idx, (df_name, df) in enumerate(all_datasets.items()):
+    st.divider()
+    st.subheader("Available datasets")
+
+    for idx, (dataset_name, df) in enumerate(all_datasets.items()):
 
         with cols[idx % 5]:
-            with st.container(height=650):
+
+            with st.container(height=550):
                 dataset_card(df,
-                             df_name)
+                             dataset_name)
+
+            if st.button(f"Select {dataset_name}",
+                         type="primary",
+                         width='stretch',
+                         key=f"select_{dataset_name}"):
+
+                ss.selected_dataset_name = dataset_name
+                ss.selected_dataset = df
+                ss.page = "view_dataset"
+                st.rerun()
 
 
 def view_dataset():
 
     display_dataset(ss.selected_dataset)
 
-    _, col1, col2, col3, _ = st.columns(5)
+    if 'selected_model_name' in ss:
+        _, col1, col2, col3, col4, _ = st.columns(6)
+    else:
+        _, col1, col2, col3, _ = st.columns(5)
 
     with col1:
         if st.button("Choose a different dataset",
-                     use_container_width=True,
-                     type='primary'):
+                     width='stretch'):
             ss.page = "data_home"
             st.rerun()
 
     with col2:
         if st.button("Edit data",
-                     use_container_width=True,
-                     type='primary'):
+                     width='stretch'):
             ss.page = "edit_data"
             st.rerun()
 
     with col3:
         if st.button("Proceed to model selection",
-                     use_container_width=True,
+                     width='stretch',
                      type='primary'):
             ss.page = "model_home"
             st.rerun()
+
+    if 'selected_model_name' in ss:
+        with col4:
+            if st.button(f"Train with {ss.selected_model_name}",
+                         width='stretch',
+                         type='primary'):
+                ss.selected_model = lazy_load_model(
+                    ss.selected_model_name
+                )[
+                    ss.selected_model_name
+                ]
+                with st.spinner("Training model....\nThis may take a while"):
+                    train()
+                asyncio.run(toaster())
+                ss.page = "training_results"
+                st.rerun()
 
 
 def edit_data():
 
     edited_df = edit_dataset(ss.selected_dataset)
 
-    _, col1, col2, col3, _ = st.columns(5)
+    if 'selected_model_name' in ss:
+        _, col1, col2, col3, col4, _ = st.columns(6)
+    else:
+        _, col1, col2, col3, _ = st.columns(5)
 
     with col1:
         if st.button("Choose a different dataset",
-                     use_container_width=True,
-                     type='primary'):
+                     width='stretch'):
             ss.page = "data_home"
             st.rerun()
 
     with col2:
         if st.button("Confirm Changes",
-                     use_container_width=True):
+                     width='stretch'):
             ss.selected_dataset = edited_df
             ss.page = "view_dataset"
             st.rerun()
 
     with col3:
         if st.button("Proceed to model selection",
-                     use_container_width=True,
+                     width='stretch',
                      type='primary'):
             ss.page = "model_home"
             st.rerun()
+
+    if 'selected_model_name' in ss:
+        with col4:
+            if st.button(f"Train with {ss.selected_model_name}",
+                         width='stretch',
+                         type='primary'):
+                ss.selected_model = lazy_load_model(
+                    ss.selected_model_name
+                )[
+                    ss.selected_model_name
+                ]
+                with st.spinner("Training model....\nThis may take a while"):
+                    train()
+                asyncio.run(toaster())
+                ss.page = "training_results"
+                st.rerun()
 
 
 def model_home():
@@ -187,7 +236,12 @@ def model_home():
 
         st.subheader("Input data")
         with st.expander("", expanded=True):
-            data_card(ss.selected_dataset)
+            data_card(ss.selected_dataset, freeze_dataset=True)
+
+        if st.button("Choose a different dataset",
+                     width='stretch'):
+            ss.page = "data_home"
+            st.rerun()
 
     with col2:
         st.subheader("Select a Base Model to train on the data")
@@ -224,14 +278,14 @@ def view_model():
 
     with col1:
         if st.button("Choose a different model",
-                     use_container_width=True,
-                     type='primary'):
+                     width='stretch'):
             ss.page = "model_home"
             st.rerun()
 
     with col2:
         if st.button("Start Training",
-                     use_container_width=True):
+                     width='stretch',
+                     type='primary'):
             with st.spinner("Training model....\nThis may take a while"):
                 train()
             asyncio.run(toaster())
@@ -265,7 +319,7 @@ def training_card():
 
     with col2:
         if st.button("Proceed to Ethical Evaluation",
-                     use_container_width=True,
+                     width='stretch',
                      type="primary"):
             with st.spinner("Training model....\nThis may take a while"):
                 train()
@@ -332,14 +386,14 @@ def training_results():
 
     with col1:
         if st.button("Choose a different configuration",
-                     use_container_width=True,
-                     type='primary'):
+                     width='stretch'):
             ss.page = "model_home"
             st.rerun()
 
     with col2:
         if st.button("Proceed to Ethical Evaluation",
-                     use_container_width=True):
+                     width='stretch',
+                     type='primary'):
             with st.spinner("Training model....\nThis may take a while"):
                 train()
             asyncio.run(toaster())
@@ -356,7 +410,7 @@ def ethical_eval():
         "Explainability"
     ]
 
-    if st.button("Back to Home", type="primary"):
+    if st.button("Back to Home"):
         ss.page = "data_home"
         st.rerun()
 

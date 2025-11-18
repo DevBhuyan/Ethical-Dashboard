@@ -97,26 +97,30 @@ def model_details():
             )
         }
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.write("**Set Parameters:**")
-            st.json(filled_out_params)
+            with st.container(height=300):
+                st.json(filled_out_params)
 
         with col2:
             st.write("**Unset Parameters:**")
-            st.json(unfilled_params)
+            with st.container(height=300):
+                st.json(unfilled_params)
 
-    st.subheader("Available Methods")
-    methods = [
-        name
-        for name, func in inspect.getmembers(
-            model,
-            predicate=inspect.ismethod
-        )
-        if not name.startswith("_")
-    ]
-    st.write(methods)
+        with col3:
+            st.write("**Available Methods:**")
+            methods = [
+                name
+                for name, func in inspect.getmembers(
+                    model,
+                    predicate=inspect.ismethod
+                )
+                if not name.startswith("_")
+            ]
+            with st.container(height=300):
+                st.write(methods)
 
     # Check if trainable
     if hasattr(model, "fit") or hasattr(model, "train"):
