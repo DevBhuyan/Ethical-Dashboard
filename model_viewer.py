@@ -20,7 +20,8 @@ def model_card():
     model = ss.selected_model
 
     st.subheader("Model Summary")
-    st.write(model)
+    with st.container(height=300):
+        st.write(model)
 
     if isinstance(model, dict):
         st.write(f"Number of tensors: {len(model)}")

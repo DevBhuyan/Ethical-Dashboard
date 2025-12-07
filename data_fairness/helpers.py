@@ -70,7 +70,9 @@ def plot_wo_save(data: dict,
                  sensitive_feature: str,
                  metrics: dict,
                  pred: np.array,
-                 silent: bool = False) -> tuple:
+                 silent: bool = False,
+                 rows: int = 1,
+                 cols: int = 6) -> tuple:
     """
     Plot the results without saving the plot.
 
@@ -122,7 +124,11 @@ def plot_wo_save(data: dict,
             gr0_indices = gr0(data["y_test"], group_indices)
             indices.append(gr0_indices)
             for metric_name, metric_func in metrics.items():
-                if metric_name not in ["accuracy_score_diff", "false_positive_rate_ratio", "false_negative_rate_ratio", "demographic_parity_difference", "equalized_odds_diff"]:
+                if metric_name not in ["accuracy_score_diff",
+                                       "false_positive_rate_ratio",
+                                       "false_negative_rate_ratio",
+                                       "demographic_parity_difference",
+                                       "equalized_odds_diff"]:
                     try:
                         group_metrics[metric_name] = metric_func(
                             data["y_test"].iloc[gr0_indices],
@@ -130,13 +136,21 @@ def plot_wo_save(data: dict,
                         )
                     except:
                         raise Exception(
-                            f"data['y_test'].iloc[gr0_indices]: {data['y_test'].iloc[gr0_indices]} | pred[gr0_indices]: {pred[gr0_indices]}")
+                            f"data['y_test'].iloc[gr0_indices]: {data['y_test'].iloc[gr0_indices]} | pred[gr0_indices]: {pred[gr0_indices]}"
+                        )
             results[group_label] = group_metrics
 
     results["INFO"] = "All values mentioned below are computed in percentage (%)"
-    for metric_name in ["accuracy_score_diff", "false_positive_rate_ratio", "false_negative_rate_ratio", "demographic_parity_difference", "equalized_odds_diff"]:
+    for metric_name in ["accuracy_score_diff",
+                        "false_positive_rate_ratio",
+                        "false_negative_rate_ratio",
+                        "demographic_parity_difference",
+                        "equalized_odds_diff"]:
         results[metric_name] = metrics[metric_name](
-            data["y_test"], pred, indices)*100
+            data["y_test"],
+            pred,
+            indices
+        )*100
 
     results["BIAS_MEASURE"] = sum([results["accuracy_score_diff"]*0.32,
                                   results["demographic_parity_difference"]*0.32,
@@ -149,9 +163,16 @@ def plot_wo_save(data: dict,
         raise Exception(results)
 
     # Plot the results
-    fig, axes = plt.subplots(1, 6, figsize=(20, 4))
+    fig, axes = plt.subplots(nrows=rows, ncols=cols, figsize=(10, 4))
 
-    for i, metric in enumerate(["accuracy", "precision", "false_positive_rate", "false_negative_rate", "selection_rate", "count"]):
+    axes = axes.flatten()
+
+    for i, metric in enumerate(["accuracy",
+                                "precision",
+                                "false_positive_rate",
+                                "false_negative_rate",
+                                "selection_rate",
+                                "count"]):
         values = []
         if sensitive_feature in data["category_maps"]:
             for group_label in data["category_maps"][sensitive_feature].values():
@@ -161,15 +182,30 @@ def plot_wo_save(data: dict,
         else:
             for group_label in data["X_test"][sensitive_feature].unique():
                 values.append(results[group_label][metric])
-            axes[i].bar(data["X_test"]
-                        [sensitive_feature].unique(), values)
+            axes[i].bar(
+                data["X_test"][sensitive_feature].unique(),
+                values
+            )
 
         axes[i].set_title(metric.capitalize())
         axes[i].set_ylabel(metric.capitalize())
+        axes[i].set_xlabel("Feature Label")
 
     plt.tight_layout()
     if not silent:
         plt.show()
+
+    counts = np.array(
+        [
+            v['count']
+            for k, v in results.items()
+            if isinstance(v, dict)
+        ],
+        dtype=float
+    )
+    cv = counts.std() / counts.mean()
+
+    results['Coefficient of Variation (for category counts)'] = cv
 
     return fig, results
 

@@ -39,21 +39,38 @@ def fairness_eval():
         st.error("Fairness scores can only be computed for binary classification datasets. The functionality to compute scores for multiclass datasets is being built.")
         return
 
-    for sensitive_feature in ss.sensitive_attributes[ss.selected_dataset_name]:
+    cols = st.columns(2)
 
-        st.subheader(f"Sensitive Feature: {sensitive_feature}")
+    for idx, sensitive_feature in enumerate(ss.sensitive_attributes[ss.selected_dataset_name]):
 
-        fig, results = plot_wo_save(
-            data,
-            sensitive_feature,
-            METRICS,
-            y_pred,
-            silent=False
-        )
-        st.pyplot(fig)
-        st.write(results)
+        with cols[idx % 2]:
+            st.subheader(f"Sensitive Feature: {sensitive_feature}")
 
-        st.divider()
+            fig, results = plot_wo_save(
+                data,
+                sensitive_feature,
+                METRICS,
+                y_pred,
+                silent=False,
+                rows=2,
+                cols=3
+            )
+            st.pyplot(fig)
+            if results['Coefficient of Variation (for category counts)'] > 0.6:
+                st.info(
+                    "The data distribution may be biased toward one or more sensitive groups"
+                )
+            st.write({
+                k: (
+                    "∞ (undefined)"
+                    if v == 100
+                    else v
+                )
+                for k, v in results.items()
+                if not isinstance(v, dict)
+            })
+
+            st.divider()
 
 
 def privacy_eval():

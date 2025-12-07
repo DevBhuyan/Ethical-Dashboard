@@ -7,6 +7,7 @@ Created on Fri Sep 26 01:10:38 2025
 """
 
 
+import numpy as np
 import streamlit as st
 import pandas as pd
 from load_datasets import (
@@ -113,6 +114,100 @@ def dataset_card(df: pd.DataFrame,
         st.dataframe(df.head(10),
                      width='stretch')
 
+    protected_col = "Class"
+    if protected_col in df.columns:
+        try:
+            from sklearn.preprocessing import LabelEncoder
+            from sklearn.metrics import mutual_info_score
+        except Exception:
+            # If any import fails, gracefully skip similarity section
+            with st.expander("Similarity with Class"):
+                st.write(
+                    "Required packages (scipy/sklearn) not available to compute similarity.")
+        else:
+
+            # prepare encoded class labels (use str to keep consistent)
+            class_ser = df[protected_col].astype(str)
+            le_cls = LabelEncoder()
+            try:
+                class_enc = le_cls.fit_transform(
+                    class_ser.fillna("<<MISSING>>"))
+            except Exception:
+                class_enc = class_ser.fillna("<<MISSING>>").values  # fallback
+
+            sim_rows = []
+            for col in df.columns:
+                if col == protected_col:
+                    continue
+
+                # drop pairwise NA
+                pair = df[[col, protected_col]].dropna()
+                if pair.shape[0] == 0:
+                    # nothing to compute
+                    sim_rows.append({
+                        "Column": col,
+                        "Type": str(df[col].dtype),
+                        "Correlation": np.nan,
+                        "MutualInfo": np.nan
+                    })
+                    continue
+
+                try:
+                    # Mutual information: for numeric, discretize into 10 bins
+                    if pd.api.types.is_numeric_dtype(df[col].dtype):
+                        # discretize; use qcut if possible
+                        try:
+                            disc = pd.qcut(pair[col], q=10,
+                                           duplicates='drop').astype(str)
+                        except Exception:
+                            disc = pd.cut(pair[col], bins=10,
+                                          duplicates='drop').astype(str)
+                        mi = mutual_info_score(
+                            disc, pair[protected_col].astype(str))
+                    else:
+                        mi = mutual_info_score(pair[col].astype(
+                            str), pair[protected_col].astype(str))
+                except Exception:
+                    mi = np.nan
+
+                # Correlation: only meaningful for numeric columns -> Pearson with encoded class
+                corr = np.nan
+                if pd.api.types.is_numeric_dtype(df[col].dtype):
+                    try:
+                        # Use label-encoded class for correlation
+                        cls_enc_pair = le_cls.transform(
+                            pair[protected_col].astype(str).fillna("<<MISSING>>"))
+                        if len(pair[col].dropna()) > 1:
+                            corr = pair[col].corr(
+                                pd.Series(cls_enc_pair, index=pair.index))
+                    except Exception:
+                        corr = np.nan
+
+                sim_rows.append({
+                    "Column": col,
+                    "Type": str(df[col].dtype),
+                    "Correlation": corr,
+                    "MutualInfo": mi
+                })
+
+            similarity_df = pd.DataFrame(sim_rows).set_index("Column")
+            # normalise MutualInfo for display sorting (just sort by MutualInfo desc)
+            similarity_df = similarity_df.sort_values(
+                by="MutualInfo", ascending=False)
+
+            with st.expander("Similarity with Class", expanded=True):
+                st.write(
+                    "**How similar / predictive each column is of the `Class` label.**")
+                # round numeric columns for neat display
+                display_df = similarity_df.copy()
+                display_df["Correlation"] = display_df["Correlation"].round(3)
+                display_df["MutualInfo"] = display_df["MutualInfo"].round(3)
+                st.dataframe(display_df, width='stretch', hide_index=False)
+    else:
+        # no Class column present
+        with st.expander("Similarity with Class"):
+            st.write("No 'Class' column found in dataset.")
+
     with st.expander("View Column wise data"):
         st.write("**Select columns to display:**")
         selected_cols = st.multiselect(
@@ -125,13 +220,6 @@ def dataset_card(df: pd.DataFrame,
 
 
 def display_dataset(df: pd.DataFrame):
-    """
-    Displays a Pandas DataFrame nicely in Streamlit with:
-    - Dataset info (shape, columns, types)
-    - Quick statistics
-    - Optional preview (top N rows)
-    - Search/filter support
-    """
     st.write("### Dataset Overview")
 
     data_card(df)
@@ -177,6 +265,101 @@ def display_dataset(df: pd.DataFrame):
                 }).T
                 st.dataframe(cat_summary,
                              width='stretch')
+
+    with col1:
+        protected_col = "Class"
+        if protected_col in df.columns:
+            try:
+                from sklearn.preprocessing import LabelEncoder
+                from sklearn.metrics import mutual_info_score
+            except Exception:
+                # If any import fails, gracefully skip similarity section
+                with st.expander("Similarity with Class"):
+                    st.write(
+                        "Required packages (scipy/sklearn) not available to compute similarity.")
+            else:
+                class_ser = df[protected_col].astype(str)
+                le_cls = LabelEncoder()
+                try:
+                    class_enc = le_cls.fit_transform(
+                        class_ser.fillna("<<MISSING>>"))
+                except Exception:
+                    class_enc = class_ser.fillna(
+                        "<<MISSING>>").values  # fallback
+
+                sim_rows = []
+                for col in df.columns:
+                    if col == protected_col:
+                        continue
+
+                    # drop pairwise NA
+                    pair = df[[col, protected_col]].dropna()
+                    if pair.shape[0] == 0:
+                        # nothing to compute
+                        sim_rows.append({
+                            "Column": col,
+                            "Type": str(df[col].dtype),
+                            "Correlation": np.nan,
+                            "MutualInfo": np.nan
+                        })
+                        continue
+
+                    try:
+                        # Mutual information: for numeric, discretize into 10 bins
+                        if pd.api.types.is_numeric_dtype(df[col].dtype):
+                            # discretize; use qcut if possible
+                            try:
+                                disc = pd.qcut(
+                                    pair[col], q=10, duplicates='drop').astype(str)
+                            except Exception:
+                                disc = pd.cut(
+                                    pair[col], bins=10, duplicates='drop').astype(str)
+                            mi = mutual_info_score(
+                                disc, pair[protected_col].astype(str))
+                        else:
+                            mi = mutual_info_score(pair[col].astype(
+                                str), pair[protected_col].astype(str))
+                    except Exception:
+                        mi = np.nan
+
+                    # Correlation: only meaningful for numeric columns -> Pearson with encoded class
+                    corr = np.nan
+                    if pd.api.types.is_numeric_dtype(df[col].dtype):
+                        try:
+                            # Use label-encoded class for correlation
+                            cls_enc_pair = le_cls.transform(
+                                pair[protected_col].astype(str).fillna("<<MISSING>>"))
+                            if len(pair[col].dropna()) > 1:
+                                corr = pair[col].corr(
+                                    pd.Series(cls_enc_pair, index=pair.index))
+                        except Exception:
+                            corr = np.nan
+
+                    sim_rows.append({
+                        "Column": col,
+                        "Type": str(df[col].dtype),
+                        "Correlation": corr,
+                        "MutualInfo": mi
+                    })
+
+                similarity_df = pd.DataFrame(sim_rows).set_index("Column")
+                # normalise MutualInfo for display sorting (just sort by MutualInfo desc)
+                similarity_df = similarity_df.sort_values(
+                    by="MutualInfo", ascending=False)
+
+                with st.expander("Similarity with Class", expanded=True):
+                    st.write(
+                        "**How similar / predictive each column is of the `Class` label.**")
+                    # round numeric columns for neat display
+                    display_df = similarity_df.copy()
+                    display_df["Correlation"] = display_df["Correlation"].round(
+                        3)
+                    display_df["MutualInfo"] = display_df["MutualInfo"].round(3)
+                    st.dataframe(display_df, width='stretch', hide_index=False)
+        else:
+            # no Class column present
+            with st.expander("Similarity with Class"):
+                st.write("No 'Class' column found in dataset.")
 
     with col2:
         with st.expander("Dataset Preview"):

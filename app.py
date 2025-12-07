@@ -25,6 +25,8 @@ from session_state_attrib import (
     init,
     ss
 )
+import logging
+logging.getLogger("streamlit").setLevel(logging.WARNING)
 
 
 st.set_page_config(

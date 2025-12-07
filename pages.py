@@ -7,6 +7,7 @@ Created on Fri Sep 26 01:13:51 2025
 """
 
 
+import pyarrow as pa
 from ethical_eval_pages import (
     fairness_eval,
     robustness_eval,
@@ -59,7 +60,7 @@ def previous_config():
 
     if load_previous_configuration():
 
-        with st.expander("Previously used Configuration", expanded=True):
+        with st.expander("Previously used Configuration", expanded=False):
 
             col1, col2, col3 = st.columns(3)
 
@@ -83,11 +84,13 @@ def data_home():
 
     names = load_all_datasets(names_only=True)
     names.insert(0, "Select a dataset")
-    choice = st.selectbox('datasets', names)
+    choice = st.selectbox('Datasets:', names)
 
     if choice != "Select a dataset":
         ss.selected_dataset_name = choice
-        ss.selected_dataset = load_specific_dataset(dset_name=choice)[choice]
+        selected_dataset = load_specific_dataset(dset_name=choice)[choice]
+        # selected_dataset = pa.Table.from_pandas(selected_dataset)
+        ss.selected_dataset = selected_dataset
         ss.page = "view_dataset"
         st.rerun()
 
@@ -122,6 +125,8 @@ def browse_dataset():
 
         with cols[idx % 5]:
 
+            # df = pa.Table.from_pandas(df)
+
             with st.container(height=550):
                 dataset_card(df,
                              dataset_name)
@@ -133,7 +138,7 @@ def browse_dataset():
 
                 ss.selected_dataset_name = dataset_name
                 ss.selected_dataset = df
-                ss.page = "view_dataset"
+                ss.page = "model_home"
                 st.rerun()
 
 
@@ -321,9 +326,9 @@ def training_card():
         if st.button("Proceed to Ethical Evaluation",
                      width='stretch',
                      type="primary"):
-            with st.spinner("Training model....\nThis may take a while"):
-                train()
-            asyncio.run(toaster())
+            # with st.spinner("Training model....\nThis may take a while"):
+            #     train()
+            # asyncio.run(toaster())
             ss.page = "ethical_eval"
             st.rerun()
 
@@ -394,9 +399,9 @@ def training_results():
         if st.button("Proceed to Ethical Evaluation",
                      width='stretch',
                      type='primary'):
-            with st.spinner("Training model....\nThis may take a while"):
-                train()
-            asyncio.run(toaster())
+            # with st.spinner("Training model....\nThis may take a while"):
+            #     train()
+            # asyncio.run(toaster())
             ss.page = "ethical_eval"
             st.rerun()
 
@@ -412,6 +417,10 @@ def ethical_eval():
 
     if st.button("Back to Home"):
         ss.page = "data_home"
+        st.rerun()
+
+    if st.button("Choose a different configuration"):
+        ss.page = "model_home"
         st.rerun()
 
     tabs = st.tabs(tab_names)
