@@ -15,7 +15,7 @@ A live demo of the dashboard is available here:
 
 https://ethical-dashboard.streamlit.app/
 
-You can also use [Example Journey.md](https://github.com/DevBhuyan/Ethical-Dashboard/blob/main/Example%20Journey.md) as an interactive guide for "how-to-use".
+You can also use [how_to_use_the_app.md](https://github.com/DevBhuyan/Ethical-Dashboard/blob/main/how_to_use_the_app.md) as an interactive guide for "how-to-use".
 
 ---
 
@@ -150,3 +150,5 @@ You must see the landing page as such:
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/a1702641-6278-4614-94b0-161b3d0975b7" />
 
 Happy evaluating!
+
+For more information on how to use the app, see [how_to_use_the_app.md](https://github.com/DevBhuyan/Ethical-Dashboard/blob/main/how_to_use_the_app.md)
