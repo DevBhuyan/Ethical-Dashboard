@@ -38,7 +38,8 @@ After this point, you will also see an ethical evaluation of the model-dataset, 
 
 ## Privacy-Preserving (simulating a Membership-Inference-Attack)
 
-9. <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/45d5effc-2e33-4715-a9f8-4dd8a532ba0f" />
+9. <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/1ee87da1-df14-4ea6-ba7c-fe0a1a60f550" />
+
 
 ## Explainability (using SHAP)
 
