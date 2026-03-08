@@ -141,4 +141,10 @@ Or if you prefer `uv`
 # Running the Dashboard locally
 
 `streamlit run app.py`
+
 Then open a browser at `http://localhost:8501`
+
+You must see the landing page as such:
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/a1702641-6278-4614-94b0-161b3d0975b7" />
+
+Happy evaluating!
