@@ -15,6 +15,8 @@ A live demo of the dashboard is available here:
 
 https://ethical-dashboard.streamlit.app/
 
+You can also use [Example Journey.md](https://github.com/DevBhuyan/Ethical-Dashboard/blob/main/Example%20Journey.md) as an interactive guide for "how-to-use".
+
 ---
 
 # Features
